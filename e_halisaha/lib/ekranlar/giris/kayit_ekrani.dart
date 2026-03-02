@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
+import 'giris_ekrani.dart';
 
 class KayitEkrani extends StatefulWidget {
   const KayitEkrani({super.key});
@@ -9,204 +10,273 @@ class KayitEkrani extends StatefulWidget {
 }
 
 class _KayitEkraniState extends State<KayitEkrani> {
-  final ApiServisi _apiServisi = ApiServisi();
-  
-  final TextEditingController _adController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _telefonController = TextEditingController();
-  final TextEditingController _sifreController = TextEditingController();
-  final TextEditingController _sifreTekrarController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _adSoyadController;
+  late TextEditingController _emailController;
+  late TextEditingController _telefonController;
+  late TextEditingController _sifreController;
 
   bool _sifreGizli = true;
-  bool _sifreTekrarGizli = true;
   bool _yukleniyor = false;
+  final ApiServisi _apiServisi = ApiServisi();
 
-  void _kayitOl() async {
-    String ad = _adController.text.trim();
-    String email = _emailController.text.trim();
-    String tel = _telefonController.text.trim(); // Artık boş da olabilir
-    String sifre = _sifreController.text.trim();
-    String sifreTekrar = _sifreTekrarController.text.trim();
+  @override
+  void initState() {
+    super.initState();
+    _adSoyadController = TextEditingController();
+    _emailController = TextEditingController();
+    _telefonController = TextEditingController();
+    _sifreController = TextEditingController();
+  }
 
-    // tel.isEmpty kontrolü buradan çıkarıldı
-    if (ad.isEmpty || email.isEmpty || sifre.isEmpty || sifreTekrar.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Lütfen zorunlu alanları (Ad, Email, Şifre) doldurun."), backgroundColor: Colors.red));
-      return;
+  // --- HAYALET KLAVYE BUG'INI ÇÖZEN KISIM ---
+  @override
+  void dispose() {
+    // Sayfa kapandığında tüm kontrolcüleri bellekten sil
+    _adSoyadController.dispose();
+    _emailController.dispose();
+    _telefonController.dispose();
+    _sifreController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _kayitOl() async {
+    // Klavyeyi zorla kapat ve kelime tamamlama (IME) hafızasını sıfırla
+    FocusScope.of(context).unfocus();
+
+    if (_formKey.currentState!.validate()) {
+      setState(() => _yukleniyor = true);
+
+      try {
+        bool basarili = await _apiServisi.kayitOl(
+          _adSoyadController.text.trim(),
+          _emailController.text.trim(),
+          _telefonController.text.trim(),
+          _sifreController.text,
+        );
+
+        if (!mounted) return;
+        setState(() => _yukleniyor = false);
+
+        if (basarili) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Kayıt başarılı! Lütfen giriş yapın."),
+              backgroundColor: Color(0xFF22C55E),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.pop(context); // Başarılı olunca giriş ekranına geri dön
+        } else {
+          _hataGoster("Kayıt işlemi başarısız. Bilgileri kontrol edin.");
+        }
+      } catch (e) {
+        setState(() => _yukleniyor = false);
+        _hataGoster("Bağlantı hatası: $e");
+      }
     }
+  }
 
-    if (sifre != sifreTekrar) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şifreler eşleşmiyor!"), backgroundColor: Colors.red));
-      return;
-    }
-
-    if (sifre.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Şifre en az 6 karakter olmalıdır."), backgroundColor: Colors.red));
-      return;
-    }
-
-    setState(() => _yukleniyor = true);
-
-    bool basarili = await _apiServisi.kayitOl(ad, email, tel, sifre);
-
-    if (!mounted) return;
-    setState(() => _yukleniyor = false);
-
-    if (basarili) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Kayıt başarılı! Lütfen giriş yapın."), backgroundColor: Colors.green),
-      );
-      Navigator.pop(context); // Giriş ekranına geri dön
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Kayıt başarısız oldu. Sunucu hatası veya email kullanımda olabilir."), backgroundColor: Colors.red),
-      );
-    }
+  void _hataGoster(String mesaj) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mesaj),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              const Text("Hesap Oluştur", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
-              const SizedBox(height: 8),
-              const Text("Hemen kayıt ol ve sahaları keşfetmeye başla.", style: TextStyle(fontSize: 16, color: Colors.grey)),
-              const SizedBox(height: 40),
-              
-              // Ad Soyad
-              _girisAlani(
-                baslik: "Ad Soyad",
-                hint: "Ahmet Yılmaz",
-                ikon: Icons.person_outline,
-                controller: _adController,
-              ),
-              const SizedBox(height: 20),
-              
-              // Email
-              _girisAlani(
-                baslik: "E-posta",
-                hint: "ornek@mail.com",
-                ikon: Icons.email_outlined,
-                controller: _emailController,
-                klavyeTipi: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 20),
-
-              // Telefon
-              _girisAlani(
-                baslik: "Telefon Numarası (İsteğe Bağlı)",
-                hint: "0555 555 55 55",
-                ikon: Icons.phone_outlined,
-                controller: _telefonController,
-                klavyeTipi: TextInputType.phone,
-              ),
-              const SizedBox(height: 20),
-              
-              // Şifre
-              _sifreAlani(
-                baslik: "Şifre",
-                hint: "********",
-                controller: _sifreController,
-                gizli: _sifreGizli,
-                onPressed: () => setState(() => _sifreGizli = !_sifreGizli),
-              ),
-              const SizedBox(height: 20),
-
-              // Şifre Tekrar
-              _sifreAlani(
-                baslik: "Şifre Tekrar",
-                hint: "********",
-                controller: _sifreTekrarController,
-                gizli: _sifreTekrarGizli,
-                onPressed: () => setState(() => _sifreTekrarGizli = !_sifreTekrarGizli),
-              ),
-              const SizedBox(height: 40),
-              
-              // Kayıt Butonu
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF0FDF4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_add_rounded,
+                      size: 48,
+                      color: Color(0xFF16A34A),
+                    ),
                   ),
-                  onPressed: _yukleniyor ? null : _kayitOl,
-                  child: _yukleniyor
-                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("KAYIT OL", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Yeni Hesap Oluştur",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // AD SOYAD
+                          Text("Ad Soyad", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _adSoyadController,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            decoration: _inputDekorasyonu("Adınız ve Soyadınız", Icons.person_outline, isDark),
+                            validator: (val) => val!.isEmpty ? "Boş bırakılamaz" : null,
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // E-POSTA
+                          Text("E-posta", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            decoration: _inputDekorasyonu("mail@example.com", Icons.email_outlined, isDark),
+                            validator: (val) => val!.isEmpty || !val.contains("@") ? "Geçerli e-posta girin" : null,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // TELEFON
+                          Text("Telefon Numarası", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _telefonController,
+                            keyboardType: TextInputType.phone,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            decoration: _inputDekorasyonu("05XX XXX XX XX", Icons.phone_android_outlined, isDark),
+                            validator: (val) => val!.isEmpty ? "Telefon boş bırakılamaz" : null,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ŞİFRE
+                          Text("Şifre", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _sifreController,
+                            obscureText: _sifreGizli,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            decoration: InputDecoration(
+                              hintText: "••••••••",
+                              hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF111827) : Colors.white,
+                              prefixIcon: Icon(Icons.lock_outline, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                              suffixIcon: IconButton(
+                                icon: Icon(_sifreGizli ? Icons.visibility_off : Icons.visibility, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                                onPressed: () => setState(() => _sifreGizli = !_sifreGizli),
+                              ),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[400]!),
+                              ),
+                            ),
+                            validator: (val) => val!.length < 6 ? "Şifre en az 6 karakter olmalı" : null,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // KAYIT OL BUTONU
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: _yukleniyor ? null : _kayitOl,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF16A34A),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: _yukleniyor 
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                  ) 
+                                : const Text("Kayıt Ol", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Zaten hesabınız var mı?",
+                        style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // Geri dönerken de klavyeyi sıfırlayalım ki bug yaşanmasın
+                          FocusScope.of(context).unfocus();
+                          Navigator.pop(context); 
+                        },
+                        child: const Text(
+                          "Giriş Yap",
+                          style: TextStyle(
+                            color: Color(0xFF16A34A),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 30),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _girisAlani({required String baslik, required String hint, required IconData ikon, required TextEditingController controller, TextInputType klavyeTipi = TextInputType.text}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(baslik, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF374151))),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: klavyeTipi,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            prefixIcon: Icon(ikon, color: Colors.grey),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 1.5)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sifreAlani({required String baslik, required String hint, required TextEditingController controller, required bool gizli, required VoidCallback onPressed}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(baslik, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF374151))),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: gizli,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-            suffixIcon: IconButton(
-              icon: Icon(gizli ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-              onPressed: onPressed,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 1.5)),
-          ),
-        ),
-      ],
+  InputDecoration _inputDekorasyonu(String hint, IconData ikon, bool isDark) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+      filled: true,
+      fillColor: isDark ? const Color(0xFF111827) : Colors.white,
+      prefixIcon: Icon(ikon, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[400]!),
+      ),
     );
   }
 }

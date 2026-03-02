@@ -52,31 +52,52 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       key: _refreshKey,
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Yönetim Paneli", style: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.bold)),
+        title: Text("Yönetim Paneli", style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF6B7280)),
+            icon: Icon(Icons.refresh, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
             onPressed: _sayfayiYenile,
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
-            onPressed: () async {
-              await KimlikServisi.cikisYap();
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context, 
-                  MaterialPageRoute(builder: (_) => const GirisEkrani()), 
-                  (route) => false
-                );
-              }
+            onPressed: () {
+              // GÜVENLİ ÇIKIŞ PENCERESİ EKLENDİ
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+                  title: Text("Çıkış Yap", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+                  content: Text("Yönetim panelinden çıkış yapmak istediğinize emin misiniz?", style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("İptal", style: TextStyle(color: Colors.grey))),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await KimlikServisi.cikisYap();
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context, 
+                            MaterialPageRoute(builder: (_) => const GirisEkrani()), 
+                            (route) => false
+                          );
+                        }
+                      },
+                      child: const Text("Çıkış Yap", style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
             },
           )
         ],
@@ -111,7 +132,7 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
             const SizedBox(height: 32),
             _onayBekleyenlerListesi(),
             const SizedBox(height: 24),
-            const Text("Hızlı Erişim", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+            Text("Hızlı Erişim", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827))),
             const SizedBox(height: 16),
             _MenuButonu(
               ikon: Icons.manage_accounts,
@@ -125,11 +146,11 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -150,7 +171,7 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
                         child: const Icon(Icons.list_alt, color: Color(0xFFF59E0B)),
                       ),
                       const SizedBox(width: 12),
-                      const Text("Kayıtlı Sahalar (Canlı)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+                      Text("Kayıtlı Sahalar (Canlı)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827))),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -165,6 +186,7 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
   }
 
   Widget _onayBekleyenlerListesi() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FutureBuilder<List<dynamic>>(
       future: _apiServisi.tumKullanicilariGetir(),
       builder: (context, snapshot) {
@@ -175,18 +197,18 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFBEB),
-            border: Border.all(color: const Color(0xFFFDE68A)),
+            color: isDark ? const Color(0xFF451A03).withValues(alpha: 0.3) : const Color(0xFFFFFBEB),
+            border: Border.all(color: isDark ? const Color(0xFFB45309) : const Color(0xFFFDE68A)),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
-                  SizedBox(width: 8),
-                  Text("Onay Bekleyen İşletmeler", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF92400E), fontSize: 16)),
+                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+                  const SizedBox(width: 8),
+                  Text("Onay Bekleyen İşletmeler", style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E), fontSize: 16)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -194,9 +216,9 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
                 margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02), blurRadius: 4, offset: const Offset(0, 2))],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,8 +227,8 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(user['fullName'] ?? 'İsimsiz', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF111827))),
-                          Text(user['phoneNumber'] ?? 'Tel Yok', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                          Text(user['fullName'] ?? 'İsimsiz', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827))),
+                          Text(user['phoneNumber'] ?? 'Tel Yok', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280))),
                         ],
                       ),
                     ),
@@ -248,23 +270,24 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
   }
 
   Widget _sahaListesi() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FutureBuilder<List<dynamic>>(
       future: _apiServisi.tumSahalariGetir(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text("Saha yok.");
+        if (!snapshot.hasData || snapshot.data!.isEmpty) return Text("Saha yok.", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54));
         var sahalar = snapshot.data!;
         return ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: sahalar.length > 5 ? 5 : sahalar.length,
-          separatorBuilder: (context, index) => const Divider(),
+          separatorBuilder: (context, index) => Divider(color: isDark ? Colors.white10 : Colors.grey[200]),
           itemBuilder: (context, index) {
             var saha = sahalar[index];
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(saha.isim, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: Text("${saha.fiyat.toInt()} ₺", style: const TextStyle(fontSize: 12)),
+              title: Text(saha.isim, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+              subtitle: Text("${saha.fiyat.toInt()} ₺", style: TextStyle(fontSize: 12, color: isDark ? Colors.greenAccent : Colors.green)),
               trailing: IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: () => _sahaSilmeOnayi(saha),
@@ -277,13 +300,15 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
   }
 
   void _sahaSilmeOnayi(dynamic saha) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Sahayı Sil"),
-        content: const Text("Bu işlem geri alınamaz."),
+        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        title: Text("Sahayı Sil", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+        content: Text("Bu işlem geri alınamaz.", style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("İptal")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("İptal", style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
@@ -305,18 +330,24 @@ class _IstatistikKarti extends StatelessWidget {
   final IconData ikon;
   final Color renk;
   const _IstatistikKarti({required this.baslik, required this.deger, required this.ikon, required this.renk});
+  
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(ikon, color: renk),
           const SizedBox(height: 12),
-          Text(deger, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text(baslik, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(deger, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+          Text(baslik, style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey)),
         ],
       ),
     );
@@ -330,23 +361,38 @@ class _MenuButonu extends StatelessWidget {
   final Color renk;
   final VoidCallback onTap;
   const _MenuButonu({required this.ikon, required this.baslik, required this.altBaslik, required this.renk, required this.onTap});
+  
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor, 
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
         child: Row(
           children: [
-            Icon(ikon, color: renk),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: renk.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(ikon, color: renk, size: 28),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(baslik, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(altBaslik, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(baslik, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                const SizedBox(height: 4),
+                Text(altBaslik, style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey)),
               ]),
             ),
+            Icon(Icons.arrow_forward_ios, color: isDark ? Colors.grey[600] : Colors.grey[400], size: 16),
           ],
         ),
       ),

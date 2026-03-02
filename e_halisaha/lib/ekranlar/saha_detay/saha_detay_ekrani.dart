@@ -13,14 +13,23 @@ class SahaDetayEkrani extends StatefulWidget {
 
 class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   final ApiServisi _apiServisi = ApiServisi();
-  DateTime _seciliTarih = DateTime.now();
+  
+  // TÜRKİYE SAAT DİLİMİNE SABİTLENDİ (UTC +3)
+  late DateTime _seciliTarih;
+  
   int? _seciliSaat;
   List<int> _doluSaatler = [];
   bool _saatlerYukleniyor = true;
 
+  // Gerçek Türkiye Saatini veren yardımcı fonksiyon
+  DateTime get _turkiyeSaati {
+    return DateTime.now().toUtc().add(const Duration(hours: 3));
+  }
+
   @override
   void initState() {
     super.initState();
+    _seciliTarih = _turkiyeSaati;
     _musaitlikKontrolEt();
   }
 
@@ -43,14 +52,17 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
             backgroundColor: const Color(0xFF16A34A),
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -59,8 +71,8 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                     widget.saha.resimYolu,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.sports_soccer, size: 80, color: Colors.grey),
+                      color: isDark ? Colors.grey[800] : Colors.grey[200],
+                      child: Icon(Icons.sports_soccer, size: 80, color: isDark ? Colors.grey[600] : Colors.grey),
                     ),
                   ),
                   Container(
@@ -68,7 +80,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter, 
                         end: Alignment.bottomCenter, 
-                        colors: [Colors.black.withOpacity(0.4), Colors.transparent]
+                        colors: [Colors.black.withOpacity(0.6), Colors.transparent, Colors.black.withOpacity(0.4)]
                       )
                     )
                   ),
@@ -89,13 +101,13 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(widget.saha.isim, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            Text(widget.saha.isim, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                             const SizedBox(height: 4),
                             Row(
                               children: [
                                 const Icon(Icons.location_on, size: 16, color: Color(0xFF16A34A)),
                                 const SizedBox(width: 4),
-                                Text(widget.saha.ilce, style: const TextStyle(color: Colors.grey)),
+                                Text(widget.saha.ilce, style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey)),
                               ],
                             ),
                           ],
@@ -103,25 +115,25 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: isDark ? const Color(0xFF16A34A).withOpacity(0.1) : const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(12)),
                         child: Text("${widget.saha.fiyat.toInt()} ₺", style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 18)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
-                  const Text("Özellikler", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Özellikler", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                   const SizedBox(height: 12),
                   _ozelliklerListesi(),
                   const SizedBox(height: 32),
-                  const Text("Tarih Seçin", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Tarih Seçin", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
                   const SizedBox(height: 12),
                   _tarihSecici(),
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Müsait Saatler", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      if (_saatlerYukleniyor) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      Text("Müsait Saatler", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                      if (_saatlerYukleniyor) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF16A34A))),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -138,18 +150,23 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   }
 
   Widget _ozelliklerListesi() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: widget.saha.ozellikler.map((ozellik) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey[200]!), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!), 
+          borderRadius: BorderRadius.circular(8),
+          color: Theme.of(context).cardColor,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF16A34A)),
             const SizedBox(width: 6),
-            Text(ozellik, style: const TextStyle(fontSize: 13)),
+            Text(ozellik, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.black87)),
           ],
         ),
       )).toList(),
@@ -157,13 +174,15 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   }
 
   Widget _tarihSecici() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return SizedBox(
       height: 90,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 14, // 1 hafta yerine 2 haftalık takvim gösterelim
+        itemCount: 14, 
         itemBuilder: (context, index) {
-          DateTime gun = DateTime.now().add(Duration(days: index));
+          DateTime gun = _turkiyeSaati.add(Duration(days: index));
           bool seciliMi = gun.day == _seciliTarih.day && gun.month == _seciliTarih.month && gun.year == _seciliTarih.year;
           
           return GestureDetector(
@@ -175,16 +194,22 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
               width: 70,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: seciliMi ? const Color(0xFF16A34A) : Colors.white,
+                color: seciliMi ? const Color(0xFF16A34A) : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: seciliMi ? const Color(0xFF16A34A) : Colors.grey[200]!),
+                border: Border.all(color: seciliMi ? const Color(0xFF16A34A) : (isDark ? Colors.grey[800]! : Colors.grey[200]!)),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"][gun.weekday - 1], style: TextStyle(color: seciliMi ? Colors.white70 : Colors.grey)),
+                  Text(
+                    ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"][gun.weekday - 1], 
+                    style: TextStyle(color: seciliMi ? Colors.white70 : (isDark ? Colors.grey[400] : Colors.grey))
+                  ),
                   const SizedBox(height: 4),
-                  Text(gun.day.toString(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: seciliMi ? Colors.white : Colors.black87)),
+                  Text(
+                    gun.day.toString(), 
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: seciliMi ? Colors.white : (isDark ? Colors.white : Colors.black87))
+                  ),
                 ],
               ),
             ),
@@ -195,8 +220,8 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   }
 
   Widget _saatSecici() {
-    // ŞU ANKİ ZAMANI ALALIM
-    final DateTime simdi = DateTime.now();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final DateTime simdi = _turkiyeSaati;
     final bool bugunMu = _seciliTarih.day == simdi.day && 
                          _seciliTarih.month == simdi.month && 
                          _seciliTarih.year == simdi.year;
@@ -214,27 +239,36 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
       itemBuilder: (context, index) {
         int saat = index + 8;
         
-        // KONTROL 1: Backend'den gelen dolu bilgisi
         bool backendDolu = _doluSaatler.contains(saat);
-        
-        // KONTROL 2: Geçmiş saat mi? (Bugünse ve saat geçtiyse)
         bool gecmisSaat = bugunMu && saat <= simdi.hour;
-        
-        // EĞER ikisinden biri true ise bu saat kilitli (dolu) görünmeli
         bool kilitli = backendDolu || gecmisSaat;
-        
         bool secili = _seciliSaat == saat;
+
+        Color kutuRengi;
+        Color yaziRengi;
+        Color cerceveRengi;
+
+        if (kilitli) {
+          kutuRengi = isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6);
+          yaziRengi = isDark ? Colors.grey[600]! : Colors.grey[400]!;
+          cerceveRengi = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+        } else if (secili) {
+          kutuRengi = const Color(0xFF16A34A);
+          yaziRengi = Colors.white;
+          cerceveRengi = const Color(0xFF16A34A);
+        } else {
+          kutuRengi = Theme.of(context).cardColor;
+          yaziRengi = isDark ? Colors.white70 : Colors.black87;
+          cerceveRengi = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+        }
 
         return GestureDetector(
           onTap: kilitli ? null : () => setState(() => _seciliSaat = saat),
           child: Container(
             decoration: BoxDecoration(
-              color: kilitli ? const Color(0xFFF3F4F6) : (secili ? const Color(0xFF16A34A) : Colors.white),
+              color: kutuRengi,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: kilitli ? Colors.grey[200]! : (secili ? const Color(0xFF16A34A) : Colors.grey[200]!),
-                width: secili ? 2 : 1,
-              ),
+              border: Border.all(color: cerceveRengi, width: secili ? 2 : 1),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -242,7 +276,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                 Text(
                   "${saat.toString().padLeft(2, '0')}:00",
                   style: TextStyle(
-                    color: kilitli ? Colors.grey[400] : (secili ? Colors.white : Colors.black87),
+                    color: yaziRengi,
                     fontWeight: secili ? FontWeight.bold : FontWeight.normal,
                     fontSize: 14,
                   ),
@@ -251,7 +285,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                   Text(
                     gecmisSaat ? "GEÇTİ" : "DOLU",
                     style: TextStyle(
-                      color: gecmisSaat ? Colors.grey[500] : Colors.red,
+                      color: gecmisSaat ? (isDark ? Colors.grey[600] : Colors.grey[500]) : Colors.redAccent,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
@@ -265,9 +299,20 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   }
 
   Widget _rezervasyonButonu() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))]),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor, 
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), 
+            blurRadius: 10, 
+            offset: const Offset(0, -4)
+          )
+        ]
+      ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF16A34A),
@@ -283,6 +328,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   }
 
   void _rezervasyonOnayiniGoster() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = await KimlikServisi.kullaniciGetir();
     if (!mounted) return;
 
@@ -291,6 +337,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
@@ -298,12 +345,12 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Rezervasyon Özeti", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("Rezervasyon Özeti", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
             const SizedBox(height: 20),
-            _ozetSatiri("Saha", widget.saha.isim),
-            _ozetSatiri("Tarih", "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}"),
-            _ozetSatiri("Saat", "${_seciliSaat?.toString().padLeft(2, '0')}:00"),
-            _ozetSatiri("Toplam Ücret", "${widget.saha.fiyat.toInt()} ₺"),
+            _ozetSatiri("Saha", widget.saha.isim, isDark),
+            _ozetSatiri("Tarih", "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}", isDark),
+            _ozetSatiri("Saat", "${_seciliSaat?.toString().padLeft(2, '0')}:00", isDark),
+            _ozetSatiri("Toplam Ücret", "${widget.saha.fiyat.toInt()} ₺", isDark),
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -351,10 +398,16 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
     );
   }
 
-  Widget _ozetSatiri(String baslik, String deger) {
+  Widget _ozetSatiri(String baslik, String deger, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(baslik, style: const TextStyle(color: Colors.grey)), Text(deger, style: const TextStyle(fontWeight: FontWeight.bold))]),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+        children: [
+          Text(baslik, style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey)), 
+          Text(deger, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black))
+        ]
+      ),
     );
   }
 }

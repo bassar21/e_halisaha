@@ -52,82 +52,90 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
     String mevcutRol = (kullanici['role'] ?? "").toString();
     int kullaniciId = kullanici['id'];
     
-    // Kullanıcının manuel olarak rol girmesini sağlamak için kontrolcü
     TextEditingController rolController = TextEditingController(text: mevcutRol);
 
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text("${kullanici['fullName'] ?? 'Kullanıcı'} - Rol Düzenle"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Veritabanı kısıtlaması nedeniyle rolü tam olarak (büyük/küçük harf dahil) doğru yazmalısınız.",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            const Text("Örnekler: Admin, admin, SahaSahibi, sahasahibi, Isletme, Oyuncu", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: rolController,
-              decoration: const InputDecoration(
-                labelText: "Rol Adı",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.security),
+      builder: (dialogCtx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+          title: Text("${kullanici['fullName'] ?? 'Kullanıcı'} - Rol Düzenle", style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Veritabanı kısıtlaması nedeniyle rolü tam olarak (büyük/küçük harf dahil) doğru yazmalısınız.",
+                style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey),
               ),
+              const SizedBox(height: 12),
+              Text("Örnekler: Admin, admin, SahaSahibi, sahasahibi, Isletme, Oyuncu", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black87)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: rolController,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Rol Adı",
+                  labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                  border: const OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[400]!)),
+                  prefixIcon: Icon(Icons.security, color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text("İptal", style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () async {
+                String girilenRol = rolController.text.trim();
+                if (girilenRol.isEmpty) return;
+
+                Navigator.pop(dialogCtx);
+                
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Güncelleniyor..."), duration: Duration(seconds: 1)),
+                );
+
+                final sonuc = await _apiServisi.kullaniciRoluGuncelle(kullaniciId, girilenRol);
+                
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(sonuc 
+                      ? "Rol başarıyla '$girilenRol' yapıldı!" 
+                      : "HATA! Veritabanı '$girilenRol' kelimesini kabul etmiyor."),
+                    backgroundColor: sonuc ? Colors.green : Colors.red,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+                
+                if(sonuc) {
+                  _verileriYukle();
+                }
+              },
+              child: const Text("Kaydet", style: TextStyle(color: Colors.white)),
             ),
           ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text("İptal")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () async {
-              String girilenRol = rolController.text.trim();
-              if (girilenRol.isEmpty) return;
-
-              Navigator.pop(dialogCtx);
-              
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Güncelleniyor..."), duration: Duration(seconds: 1)),
-              );
-
-              final sonuc = await _apiServisi.kullaniciRoluGuncelle(kullaniciId, girilenRol);
-              
-              if (!mounted) return;
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(sonuc 
-                    ? "Rol başarıyla '$girilenRol' yapıldı!" 
-                    : "HATA! Veritabanı '$girilenRol' kelimesini kabul etmiyor."),
-                  backgroundColor: sonuc ? Colors.green : Colors.red,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
-              
-              if(sonuc) {
-                _verileriYukle();
-              }
-            },
-            child: const Text("Kaydet", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Kullanıcı Yönetimi", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
+        foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
       body: Column(
@@ -136,11 +144,11 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05), 
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), 
                     blurRadius: 10,
                     offset: const Offset(0, 4)
                   )
@@ -149,11 +157,13 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
               child: TextField(
                 controller: _aramaController,
                 onChanged: _kullanicilariFiltrele,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                decoration: InputDecoration(
                   hintText: "İsim, Email, Tel veya Rol ara...",
-                  prefixIcon: Icon(Icons.search, color: Color(0xFF16A34A)),
+                  hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF16A34A)),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 15),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
                 ),
               ),
             ),
@@ -162,11 +172,11 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
             child: _yukleniyor
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
                 : _filtrelenmisKullanicilar.isEmpty
-                    ? const Center(child: Text("Kullanıcı bulunamadı."))
+                    ? Center(child: Text("Kullanıcı bulunamadı.", style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)))
                     : ListView.builder(
                         itemCount: _filtrelenmisKullanicilar.length,
                         itemBuilder: (context, index) {
-                          return _kullaniciKarti(_filtrelenmisKullanicilar[index]);
+                          return _kullaniciKarti(_filtrelenmisKullanicilar[index], isDark);
                         },
                       ),
           ),
@@ -175,31 +185,30 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
     );
   }
 
-  Widget _kullaniciKarti(dynamic k) {
+  Widget _kullaniciKarti(dynamic k, bool isDark) {
     String rol = (k['role'] ?? 'Yok').toString();
     String rolKucuk = rol.toLowerCase();
     
-    // Rolüne göre renk belirleme
     Color rolRengi = Colors.grey;
-    Color rolArkaPlan = Colors.grey.shade100;
+    Color rolArkaPlan = Colors.grey.withValues(alpha: isDark ? 0.2 : 0.1);
     
     if (rolKucuk == 'admin') {
       rolRengi = Colors.red;
-      rolArkaPlan = Colors.red.shade50;
+      rolArkaPlan = Colors.red.withValues(alpha: isDark ? 0.2 : 0.1);
     } else if (rolKucuk == 'isletme' || rolKucuk == 'sahasahibi') {
       rolRengi = Colors.orange;
-      rolArkaPlan = Colors.orange.shade50;
+      rolArkaPlan = Colors.orange.withValues(alpha: isDark ? 0.2 : 0.1);
     } else if (rolKucuk == 'oyuncu' || rolKucuk == 'user') {
       rolRengi = Colors.blue;
-      rolArkaPlan = Colors.blue.shade50;
+      rolArkaPlan = Colors.blue.withValues(alpha: isDark ? 0.2 : 0.1);
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 5)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03), blurRadius: 5)],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -208,13 +217,13 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
           backgroundColor: const Color(0xFF16A34A).withValues(alpha: 0.1),
           child: Text(k['fullName']?[0].toUpperCase() ?? "?", style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 18)),
         ),
-        title: Text(k['fullName'] ?? "İsimsiz", style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(k['fullName'] ?? "İsimsiz", style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text("${k['email']}"),
-            Text("${k['phoneNumber'] ?? 'Telefon Yok'}"),
+            Text("${k['email']}", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.black54)),
+            Text("${k['phoneNumber'] ?? 'Telefon Yok'}", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.black54)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
