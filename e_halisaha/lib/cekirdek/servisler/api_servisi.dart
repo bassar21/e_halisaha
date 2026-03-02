@@ -16,38 +16,58 @@ class ApiServisi {
     };
   }
 
-  // --- GÜNCELLENMİŞ KAYIT OLMA FONKSİYONU ---
-  Future<bool> kayitOl(String adSoyad, String email, String telefon, String sifre) async {
+  // --- KAYIT OL (GÜNCELLENDİ: ARTIK MAP DÖNÜYOR) ---
+  Future<Map<String, dynamic>> kayitOl(String adSoyad, String email, String telefon, String sifre) async {
     try {
       final url = Uri.parse("$_baseUrl/auth/register");
-      debugPrint("Kayıt İsteği Başladı: $url");
       
       final bodyData = jsonEncode({
         "fullName": adSoyad,
-        "name": adSoyad, // Backend hangisini istiyorsa yakalamak için
+        "name": adSoyad, 
         "email": email,
         "phone": telefon,
         "phoneNumber": telefon,
         "password": sifre
-        // DİKKAT: 'role' parametresi kaldırıldı. Backend bunu kendisi atamalı.
       });
-
-      debugPrint("Gönderilen Veri: $bodyData");
 
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: bodyData,
-      ).timeout(const Duration(seconds: 15)); // Zaman aşımı süresi 15 saniyeye çıkarıldı
+      ).timeout(const Duration(seconds: 15)); 
 
-      debugPrint("Kayıt Yanıtı: STATÜ: ${response.statusCode} - BODY: ${response.body}");
-      return response.statusCode == 200 || response.statusCode == 201;
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {"success": true, "message": decoded['message'], "userId": decoded['userId']};
+      }
+      return {"success": false, "error": decoded['error'] ?? "Kayıt başarısız."};
     } catch (e) {
-      debugPrint("Kayıt fonksiyonunda KRİTİK HATA veya ZAMAN AŞIMI: $e");
-      return false;
+      debugPrint("Kayıt fonksiyonunda hata: $e");
+      return {"success": false, "error": "Bağlantı hatası oluştu."};
     }
   }
 
+  // --- OTP / KOD DOĞRULAMA (YENİ EKLENDİ) ---
+  Future<Map<String, dynamic>> otpDogrula(String email, String kod) async {
+    try {
+      final url = Uri.parse("$_baseUrl/auth/verify-otp");
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "code": kod}),
+      );
+
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {"success": true, "message": decoded['message']};
+      }
+      return {"success": false, "error": decoded['error'] ?? "Doğrulama başarısız."};
+    } catch (e) {
+      return {"success": false, "error": "Sunucuya bağlanılamadı."};
+    }
+  }
+
+  // --- GİRİŞ YAP ---
   Future<Map<String, dynamic>?> girisYap(String email, String password) async {
     try {
       final response = await http.post(
@@ -55,10 +75,16 @@ class ApiServisi {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"login": email, "password": password}),
       );
+      
+      final data = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         await KimlikServisi.girisYapveKaydet(data);
         return data;
+      } 
+      // Eğer kullanıcı onaylı değilse backend 403 ve needVerify dönecek
+      else if (response.statusCode == 403) {
+        return {"success": false, "needVerify": true, "error": data['error']};
       }
       return null;
     } catch (e) { return null; }
@@ -89,7 +115,6 @@ class ApiServisi {
     } catch (e) { return false; }
   }
 
-  // --- YENİ EKLENEN PROFİL GÜNCELLEME FONKSİYONU ---
   Future<bool> profilGuncelle(int kullaniciId, String ad, String email, String telefon) async {
     try {
       final url = Uri.parse('$_baseUrl/users/$kullaniciId');
@@ -103,22 +128,13 @@ class ApiServisi {
         'phoneNumber': telefon
       });
 
-      debugPrint("Profil Güncelleme İsteği: $url");
-      debugPrint("Gönderilen Profil Verisi: $bodyData");
-
       var response = await http.put(url, headers: headers, body: bodyData);
       
-      // Eğer backend PUT yerine PATCH metodunu kullanıyorsa diye güvenlik önlemi
       if (response.statusCode == 404 || response.statusCode == 405) {
-        debugPrint("PUT başarısız oldu (${response.statusCode}), PATCH deneniyor...");
         response = await http.patch(url, headers: headers, body: bodyData);
       }
-
-      debugPrint("Profil Güncelleme Yanıtı: STATÜ: ${response.statusCode} - BODY: ${response.body}");
-      
       return response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204;
     } catch (e) {
-      debugPrint("Profil Güncelleme Hatası: $e");
       return false;
     }
   }
@@ -135,11 +151,8 @@ class ApiServisi {
         final url = Uri.parse('$_baseUrl/users/$id');
         r = await http.put(url, headers: headers, body: body);
       }
-
-      debugPrint("Rol Güncelleme Yanıtı: ${r.statusCode} - ${r.body}");
       return r.statusCode == 200 || r.statusCode == 204;
     } catch (e) { 
-      debugPrint("Rol güncelleme hatası: $e");
       return false; 
     }
   }
@@ -207,26 +220,15 @@ class ApiServisi {
     return [];
   }
 
-  // --- GÜNCELLENEN REZERVASYONLARIMI GETİR FONKSİYONU ---
   Future<List<dynamic>> rezervasyonlarimiGetir() async {
     try {
       final r = await http.get(Uri.parse('$_baseUrl/bookings/my'), headers: await _headers());
-      
-      debugPrint("Rezervasyonlarım GET Yanıtı: STATÜ: ${r.statusCode} - BODY: ${r.body}");
-
       if (r.statusCode == 200) {
         final data = jsonDecode(r.body);
-        
-        // Eğer backend direkt liste [] şeklinde dönüyorsa:
-        if (data is List) {
-          return data;
-        }
-        // Eğer { "data": [...] } veya { "bookings": [...] } şeklinde dönüyorsa:
+        if (data is List) return data;
         return data['data'] ?? data['bookings'] ?? [];
       }
-    } catch (e) { 
-      debugPrint("Rezervasyonları getirirken HATA: $e"); 
-    }
+    } catch (e) { debugPrint("HATA: $e"); }
     return [];
   }
 
@@ -242,37 +244,89 @@ class ApiServisi {
     return [];
   }
 
-  // --- GÜNCELLENEN REZERVASYON YAP FONKSİYONU ---
   Future<bool> rezervasyonYap(int sahaId, int userId, DateTime tarih, int saat, String notlar) async {
     try {
       String d = tarih.toIso8601String().split('T')[0];
       String start = "${d}T${saat.toString().padLeft(2, '0')}:00:00";
       String end = "${d}T${(saat+1).toString().padLeft(2, '0')}:00:00";
       
-      // userId ve notes parametrelerini JSON'a EKLEDİK!
       final bodyData = jsonEncode({
         "pitchId": sahaId, 
-        "userId": userId, // BACKEND KİMİN REZERVASYONU OLDUĞUNU BİLSİN
+        "userId": userId, 
         "startTime": start, 
         "endTime": end, 
         "paymentMethod": "online",
         "notes": notlar 
       });
 
-      debugPrint("Rezervasyon Yap İsteği: $bodyData");
-
       final r = await http.post(
         Uri.parse('$_baseUrl/bookings'), 
         headers: await _headers(),
         body: bodyData
       );
-
-      debugPrint("Rezervasyon Yap Yanıtı: STATÜ: ${r.statusCode} - BODY: ${r.body}");
-      
       return r.statusCode == 200 || r.statusCode == 201;
-    } catch (e) { 
-      debugPrint("Rezervasyon yaparken HATA: $e");
-      return false; 
+    } catch (e) { return false; }
+  }
+
+  Future<bool> ticketOlustur(int userId, String cihazBilgisi, String mesaj, String? resimYolu) async {
+    try {
+      var uri = Uri.parse('$_baseUrl/tickets');
+      var request = http.MultipartRequest('POST', uri);
+      
+      String? token = await KimlikServisi.tokenGetir();
+      if (token != null) {
+        request.headers['Authorization'] = "Bearer $token";
+      }
+
+      request.fields['userId'] = userId.toString();
+      request.fields['deviceInfo'] = cihazBilgisi;
+      request.fields['message'] = mesaj;
+
+      if (resimYolu != null && resimYolu.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath('image', resimYolu));
+      }
+
+      var response = await request.send();
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint("Ticket gönderme hatası: $e");
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> destekTalepleriniGetir() async {
+    try {
+      final r = await http.get(Uri.parse('$_baseUrl/tickets'), headers: await _headers());
+      if (r.statusCode == 200) {
+        final decoded = jsonDecode(r.body);
+        return decoded['data'] ?? [];
+      }
+    } catch (e) {
+      debugPrint("💥 Ticket çekme hatası: $e");
+    }
+    return [];
+  }
+
+  Future<bool> ticketDurumGuncelle(int ticketId, String durum) async {
+    try {
+      final url = Uri.parse('$_baseUrl/tickets/$ticketId/status');
+      final headers = await _headers();
+      final body = jsonEncode({'status': durum});
+      final r = await http.patch(url, headers: headers, body: body);
+      return r.statusCode == 200;
+    } catch (e) {
+      debugPrint("💥 Durum güncelleme hatası: $e");
+      return false;
+    }
+  }
+
+  Future<bool> ticketSil(int ticketId) async {
+    try {
+      final r = await http.delete(Uri.parse('$_baseUrl/tickets/$ticketId'), headers: await _headers());
+      return r.statusCode == 200;
+    } catch (e) {
+      debugPrint("💥 Silme hatası: $e");
+      return false;
     }
   }
 

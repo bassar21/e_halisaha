@@ -3,6 +3,7 @@ import '../../cekirdek/servisler/api_servisi.dart';
 import '../../cekirdek/servisler/kimlik_servisi.dart';
 import '../giris/giris_ekrani.dart';
 import 'kullanici_yonetimi_ekrani.dart';
+import 'destek_talepleri_ekrani.dart'; 
 
 class AdminAnaSayfa extends StatefulWidget {
   const AdminAnaSayfa({super.key});
@@ -71,7 +72,6 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: () {
-              // GÜVENLİ ÇIKIŞ PENCERESİ EKLENDİ
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
@@ -134,6 +134,7 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
             const SizedBox(height: 24),
             Text("Hızlı Erişim", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827))),
             const SizedBox(height: 16),
+            
             _MenuButonu(
               ikon: Icons.manage_accounts,
               baslik: "Kullanıcı ve Rol Yönetimi",
@@ -143,7 +144,21 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const KullaniciYonetimiEkrani()));
               },
             ),
+            
             const SizedBox(height: 12),
+            
+            _MenuButonu(
+              ikon: Icons.support_agent,
+              baslik: "Destek Talepleri (Geri Bildirimler)",
+              altBaslik: "Kullanıcılardan gelen mesajları ve cihaz bilgilerini gör",
+              renk: const Color(0xFFF59E0B), 
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const DestekTalepleriEkrani()));
+              },
+            ),
+
+            const SizedBox(height: 12),
+
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
@@ -251,7 +266,7 @@ class _AdminAnaSayfaState extends State<AdminAnaSayfa> {
                             "phoneNumber": user['phoneNumber']
                           } 
                         );
-                        if (!mounted) return;
+                        if (!context.mounted) return; // UYARI DÜZELTİLDİ
                         if (sonuc) {
                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Onaylandı!"), backgroundColor: Colors.green));
                            _sayfayiYenile();

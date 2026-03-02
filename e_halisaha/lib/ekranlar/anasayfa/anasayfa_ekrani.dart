@@ -34,6 +34,20 @@ class _AnasayfaEkraniState extends State<AnasayfaEkrani> {
     _verileriYukle();
   }
 
+  // --- SAATE GÖRE SELAMLAMA MESAJI ---
+  String _selamlamaMesajiGetir() {
+    final saat = DateTime.now().hour;
+    if (saat >= 5 && saat < 12) {
+      return "Günaydın! ☀️";
+    } else if (saat >= 12 && saat < 18) {
+      return "İyi Günler! 😊";
+    } else if (saat >= 18 && saat < 22) {
+      return "İyi Akşamlar! 🌙";
+    } else {
+      return "İyi Geceler! ⚽";
+    }
+  }
+
   Future<void> _verileriYukle() async {
     try {
       final user = await KimlikServisi.kullaniciGetir();
@@ -111,7 +125,8 @@ class _AnasayfaEkraniState extends State<AnasayfaEkrani> {
                             children: [
                               Text("Merhaba, ${_kullaniciAdi ?? "Futbolsever"} 👋", 
                                 style: TextStyle(fontSize: 14, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563))),
-                              Text("Maç Başlıyor!", 
+                              // ARTIK BURASI DİNAMİK:
+                              Text(_selamlamaMesajiGetir(), 
                                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF111827))),
                             ],
                           ),
@@ -237,7 +252,6 @@ class _AnasayfaEkraniState extends State<AnasayfaEkrani> {
               icon: const Icon(Icons.logout),
               label: const Text("Çıkış Yap"),
               onPressed: () {
-                // ÇIKIŞ YAP ONAY PENCERESİ BURAYA EKLENDİ
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
@@ -252,8 +266,8 @@ class _AnasayfaEkraniState extends State<AnasayfaEkrani> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                         onPressed: () {
-                          Navigator.pop(ctx); // Pencereyi kapat
-                          _cikisYap(); // Gerçek çıkış fonksiyonunu çağır
+                          Navigator.pop(ctx);
+                          _cikisYap();
                         },
                         child: const Text("Çıkış Yap", style: TextStyle(color: Colors.white)),
                       ),

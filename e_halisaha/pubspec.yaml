@@ -15,7 +15,7 @@ dependencies:
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
   cupertino_icons: ^1.0.8
-  image_picker: ^1.0.7
+  image_picker: ^1.2.1
   geolocator: ^10.1.0
   http: ^1.2.0
   flutter_secure_storage: ^10.0.0
@@ -23,6 +23,7 @@ dependencies:
   video_player: ^2.8.1
   shared_preferences: ^2.2.2
   intl: ^0.20.2 # Sürüm 0.18.1'den 0.20.2'ye güncellendi (Hata buradaydı)
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:

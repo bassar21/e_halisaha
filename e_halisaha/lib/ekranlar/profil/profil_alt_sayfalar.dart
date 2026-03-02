@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../cekirdek/servisler/api_servisi.dart';
 import '../../cekirdek/servisler/kimlik_servisi.dart';
 
-// --- TEMA YÖNETİCİSİ (KALICI HAFIZA EKLENDİ) ---
+// --- TEMA YÖNETİCİSİ ---
 class TemaAyari {
   static ValueNotifier<ThemeMode> temaModu = ValueNotifier(ThemeMode.light);
 
-  // Uygulama açılırken hafızadan okuma yapar (main.dart içinden çağrılır)
   static Future<void> temaYukle() async {
     final prefs = await SharedPreferences.getInstance();
-    final bool isDark = prefs.getBool('koyu_tema_acik') ?? false; // Varsayılan aydınlık
+    final bool isDark = prefs.getBool('koyu_tema_acik') ?? false; 
     temaModu.value = isDark ? ThemeMode.dark : ThemeMode.light;
   }
 
-  // Kullanıcı butona bastığında hem ekranı değiştirir hem de hafızaya kaydeder
   static Future<void> temaDegistir(bool karanlikMi) async {
     temaModu.value = karanlikMi ? ThemeMode.dark : ThemeMode.light;
     final prefs = await SharedPreferences.getInstance();
@@ -72,7 +74,6 @@ class _GizliVideoTetikleyiciState extends State<GizliVideoTetikleyici> {
   }
 }
 
-// --- GİZLİ VİDEO OYNATICI PENCERESİ ---
 class _GizliVideoPenceresi extends StatefulWidget {
   final String videoYolu;
   const _GizliVideoPenceresi({required this.videoYolu});
@@ -289,7 +290,7 @@ class _RandevularimSayfasiState extends State<RandevularimSayfasi> {
   }
 }
 
-// --- AYARLAR SAYFASI ---
+// --- AYARLAR SAYFASI (GERİ BİLDİRİM FAB EKLENDİ) ---
 class AyarlarSayfasi extends StatefulWidget {
   const AyarlarSayfasi({super.key});
 
@@ -299,6 +300,36 @@ class AyarlarSayfasi extends StatefulWidget {
 
 class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
   bool _bildirimAcik = true;
+
+  // --- CİHAZ BİLGİSİNİ ALAN FONKSİYON ---
+  Future<String> _cihazBilgisiAl() async {
+    if (kIsWeb) return "Web Tarayıcı";
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        return "${androidInfo.brand} ${androidInfo.model} (Android ${androidInfo.version.release})";
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return "${iosInfo.name} ${iosInfo.systemName} ${iosInfo.systemVersion}";
+      }
+    } catch (e) {
+      return "Cihaz bilgisi alınamadı";
+    }
+    return "Bilinmeyen Cihaz";
+  }
+
+  // --- GERİ BİLDİRİM / TICKET PENCERESİ ---
+  void _geriBildirimPenceresiAc() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _GeriBildirimFormu(cihazBilgisiFonksiyonu: _cihazBilgisiAl);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +343,14 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
+      ),
+      // YÜZEN TICKET BUTONU
+      floatingActionButton: FloatingActionButton(
+        onPressed: _geriBildirimPenceresiAc,
+        backgroundColor: const Color(0xFF16A34A),
+        tooltip: "Geri Bildirim / Destek",
+        elevation: 4,
+        child: const Icon(Icons.support_agent, color: Colors.white, size: 28),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -372,6 +411,143 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
       title: Text(baslik, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
       subtitle: Text(altBaslik),
       trailing: Switch(value: deger, onChanged: onChanged, activeColor: const Color(0xFF16A34A)),
+    );
+  }
+}
+
+// --- GERİ BİLDİRİM FORMU WIDGET'I ---
+class _GeriBildirimFormu extends StatefulWidget {
+  final Future<String> Function() cihazBilgisiFonksiyonu;
+  const _GeriBildirimFormu({required this.cihazBilgisiFonksiyonu});
+
+  @override
+  State<_GeriBildirimFormu> createState() => _GeriBildirimFormuState();
+}
+
+class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
+  final TextEditingController _mesajController = TextEditingController();
+  final ApiServisi _apiServisi = ApiServisi();
+  XFile? _secilenResim;
+  bool _gonderiliyor = false;
+
+  Future<void> _resimSec() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? resim = await picker.pickImage(source: ImageSource.gallery);
+    if (resim != null) {
+      setState(() => _secilenResim = resim);
+    }
+  }
+
+  Future<void> _gonder() async {
+    if (_mesajController.text.trim().isEmpty) return;
+
+    setState(() => _gonderiliyor = true);
+    
+    // Kullanıcı ID'sini ve cihazı al
+    final user = await KimlikServisi.kullaniciGetir();
+    int userId = user?['id'] ?? user?['userId'] ?? 0;
+    String cihazBilgisi = await widget.cihazBilgisiFonksiyonu();
+
+    // Api'ye gönder
+    bool basarili = await _apiServisi.ticketOlustur(
+      userId,
+      cihazBilgisi,
+      _mesajController.text.trim(),
+      _secilenResim?.path,
+    );
+
+    if (!mounted) return;
+    setState(() => _gonderiliyor = false);
+
+    if (basarili) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Geri bildiriminiz ulaştı. Teşekkürler!"), backgroundColor: Colors.green),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gönderilirken bir hata oluştu."), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 24, right: 24, top: 24
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Destek Talebi / Öneri", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                IconButton(icon: Icon(Icons.close, color: isDark ? Colors.white54 : Colors.black54), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text("Yaşadığınız sorunu veya önerinizi detaylıca yazın.", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700])),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _mesajController,
+              maxLines: 4,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
+              decoration: InputDecoration(
+                hintText: "Buraya yazın...",
+                hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF111827) : Colors.grey[100],
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _resimSec,
+                  icon: const Icon(Icons.image, size: 18),
+                  label: const Text("Ekran Görüntüsü Ekle"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                    foregroundColor: isDark ? Colors.white : Colors.black87,
+                    elevation: 0,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (_secilenResim != null) 
+                  const Icon(Icons.check_circle, color: Colors.green),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _gonderiliyor ? null : _gonder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _gonderiliyor 
+                  ? const CircularProgressIndicator(color: Colors.white) 
+                  : const Text("Gönder", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
     );
   }
 }

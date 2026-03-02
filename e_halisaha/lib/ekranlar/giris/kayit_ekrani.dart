@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
-import 'giris_ekrani.dart';
+import 'dogrulama_ekrani.dart'; // Bu importu eklediğinden emin ol
 
 class KayitEkrani extends StatefulWidget {
   const KayitEkrani({super.key});
@@ -29,10 +29,8 @@ class _KayitEkraniState extends State<KayitEkrani> {
     _sifreController = TextEditingController();
   }
 
-  // --- HAYALET KLAVYE BUG'INI ÇÖZEN KISIM ---
   @override
   void dispose() {
-    // Sayfa kapandığında tüm kontrolcüleri bellekten sil
     _adSoyadController.dispose();
     _emailController.dispose();
     _telefonController.dispose();
@@ -41,14 +39,14 @@ class _KayitEkraniState extends State<KayitEkrani> {
   }
 
   Future<void> _kayitOl() async {
-    // Klavyeyi zorla kapat ve kelime tamamlama (IME) hafızasını sıfırla
     FocusScope.of(context).unfocus();
 
     if (_formKey.currentState!.validate()) {
       setState(() => _yukleniyor = true);
 
       try {
-        bool basarili = await _apiServisi.kayitOl(
+        // FIX: ApiServisi.kayitOl artık bool değil Map döndürdüğü için uygun şekilde karşıladık
+        final Map<String, dynamic> sonuc = await _apiServisi.kayitOl(
           _adSoyadController.text.trim(),
           _emailController.text.trim(),
           _telefonController.text.trim(),
@@ -58,20 +56,27 @@ class _KayitEkraniState extends State<KayitEkrani> {
         if (!mounted) return;
         setState(() => _yukleniyor = false);
 
-        if (basarili) {
+        if (sonuc['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Kayıt başarılı! Lütfen giriş yapın."),
+              content: Text("Kayıt başarılı! Doğrulama kodu e-postanıza gönderildi."),
               backgroundColor: Color(0xFF22C55E),
               behavior: SnackBarBehavior.floating,
             ),
           );
-          Navigator.pop(context); // Başarılı olunca giriş ekranına geri dön
+          
+          // BAŞARILI: Kullanıcıyı artık Doğrulama Ekranına yönlendiriyoruz
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DogrulamaEkrani(email: _emailController.text.trim()),
+            ),
+          );
         } else {
-          _hataGoster("Kayıt işlemi başarısız. Bilgileri kontrol edin.");
+          _hataGoster(sonuc['error'] ?? "Kayıt işlemi başarısız.");
         }
       } catch (e) {
-        setState(() => _yukleniyor = false);
+        if (mounted) setState(() => _yukleniyor = false);
         _hataGoster("Bağlantı hatası: $e");
       }
     }
@@ -147,7 +152,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // AD SOYAD
                           Text("Ad Soyad", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -158,7 +162,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                           ),
                           const SizedBox(height: 16),
                           
-                          // E-POSTA
                           Text("E-posta", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -170,7 +173,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                           ),
                           const SizedBox(height: 16),
 
-                          // TELEFON
                           Text("Telefon Numarası", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -182,7 +184,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                           ),
                           const SizedBox(height: 16),
 
-                          // ŞİFRE
                           Text("Şifre", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -209,7 +210,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                           ),
                           const SizedBox(height: 24),
 
-                          // KAYIT OL BUTONU
                           SizedBox(
                             width: double.infinity,
                             height: 48,
@@ -242,7 +242,6 @@ class _KayitEkraniState extends State<KayitEkrani> {
                       ),
                       TextButton(
                         onPressed: () {
-                          // Geri dönerken de klavyeyi sıfırlayalım ki bug yaşanmasın
                           FocusScope.of(context).unfocus();
                           Navigator.pop(context); 
                         },
