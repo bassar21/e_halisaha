@@ -62,12 +62,13 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
 
     // Normalize role for initial selection
     String baslangicRolu = 'oyuncu';
-    if (mevcutRol == 'admin')
+    if (mevcutRol == 'admin') {
       baslangicRolu = 'admin';
-    else if (mevcutRol == 'isletme' || mevcutRol == 'sahasahibi')
+    } else if (mevcutRol == 'isletme' || mevcutRol == 'sahasahibi') {
       baslangicRolu = 'isletme';
-    else
+    } else {
       baslangicRolu = 'oyuncu';
+    }
 
     String secilenRol = baslangicRolu;
 
@@ -96,7 +97,7 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: secilenRol,
+                    initialValue: secilenRol,
                     dropdownColor: isDark
                         ? const Color(0xFF374151)
                         : Colors.white,
@@ -170,7 +171,7 @@ class _KullaniciYonetimiEkraniState extends State<KullaniciYonetimiEkrani> {
                       secilenRol,
                     );
 
-                    if (!mounted) return;
+                    if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

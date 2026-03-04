@@ -116,10 +116,10 @@ class ApiServisi {
   Future<List<dynamic>> tumKullanicilariGetir() async {
     try {
       final headers = await _headers();
-      print("Kullanıcıları getirme isteği başlatıldı. Headers: $headers");
+      debugPrint("Kullanıcıları getirme isteği başlatıldı. Headers: $headers");
       final r = await http.get(Uri.parse('$_baseUrl/users'), headers: headers);
-      print("Kullanıcılar Yanıt Kodu: ${r.statusCode}");
-      print("Kullanıcılar Yanıt İçeriği: ${r.body}");
+      debugPrint("Kullanıcılar Yanıt Kodu: ${r.statusCode}");
+      debugPrint("Kullanıcılar Yanıt İçeriği: ${r.body}");
       if (r.statusCode == 200) {
         final decoded = jsonDecode(r.body);
         if (decoded is List) {
@@ -130,8 +130,8 @@ class ApiServisi {
         return [];
       }
     } catch (e) {
-      print("--- KRİTİK KULLANICI LİSTESİ HATASI ---");
-      print(e);
+      debugPrint("--- KRİTİK KULLANICI LİSTESİ HATASI ---");
+      debugPrint(e.toString());
     }
     return [];
   }
@@ -274,6 +274,30 @@ class ApiServisi {
       return r.statusCode == 200 || r.statusCode == 201;
     } catch (e) {
       debugPrint("Saha ekleme hatası: $e");
+      return false;
+    }
+  }
+
+  Future<bool> sahaResimGuncelle(String pitchId, String resimYolu) async {
+    try {
+      var uri = Uri.parse('$_baseUrl/pitches/$pitchId/image');
+      var request = http.MultipartRequest('POST', uri);
+
+      String? token = await KimlikServisi.tokenGetir();
+      if (token != null) {
+        request.headers['Authorization'] = "Bearer $token";
+      }
+
+      if (resimYolu.isNotEmpty) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', resimYolu),
+        );
+      }
+
+      var response = await request.send();
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint("Saha resim yükleme hatası: $e");
       return false;
     }
   }

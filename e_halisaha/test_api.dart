@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 void main() async {
-  print("--- API TEST (LOGIN & GET USERS) ---");
+  debugPrint("--- API TEST (LOGIN & GET USERS) ---");
   const String baseUrl = "http://185.157.46.167:3000/api";
 
   try {
@@ -19,13 +20,13 @@ void main() async {
         )
         .timeout(const Duration(seconds: 10));
 
-    print("LOGIN Status: ${loginRes.statusCode}");
-    // print("LOGIN Body: ${loginRes.body}");
+    debugPrint("LOGIN Status: ${loginRes.statusCode}");
+    // debugPrint("LOGIN Body: ${loginRes.body}");
 
     if (loginRes.statusCode == 200) {
       final data = jsonDecode(loginRes.body);
       final token = data['token'];
-      print("Token alındı.");
+      debugPrint("Token alındı.");
 
       // 2. Kullanıcıları Çek
       final usersRes = await http.get(
@@ -35,10 +36,10 @@ void main() async {
           "Authorization": "Bearer $token",
         },
       );
-      print("GET USERS Status: ${usersRes.statusCode}");
-      print("GET USERS Body: ${usersRes.body}");
+      debugPrint("GET USERS Status: ${usersRes.statusCode}");
+      debugPrint("GET USERS Body: ${usersRes.body}");
     }
   } catch (e) {
-    print("HATA: $e");
+    debugPrint("HATA: $e");
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
-import '../../cekirdek/servisler/api_servisi.dart';
 
 class KayitEkrani extends StatefulWidget {
   const KayitEkrani({super.key});
@@ -59,12 +58,14 @@ class _KayitEkraniState extends State<KayitEkrani> {
         if (sonuc['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Kayıt başarılı! Doğrulama kodu e-postanıza gönderildi."),
+              content: Text(
+                "Kayıt başarılı! Doğrulama kodu e-postanıza gönderildi.",
+              ),
               backgroundColor: Color(0xFF22C55E),
               behavior: SnackBarBehavior.floating,
             ),
           );
-          
+
           // DOĞRULAMAYI ATLIP DİREKT POP YAPARAK LOGİNE DÖNDÜRÜYORUZ
           Navigator.pop(context);
         } else {
@@ -110,7 +111,9 @@ class _KayitEkraniState extends State<KayitEkrani> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF0FDF4),
+                      color: isDark
+                          ? const Color(0xFF1F2937)
+                          : const Color(0xFFF0FDF4),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -136,7 +139,9 @@ class _KayitEkraniState extends State<KayitEkrani> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.3 : 0.05,
+                          ),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -147,61 +152,141 @@ class _KayitEkraniState extends State<KayitEkrani> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Ad Soyad", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          Text(
+                            "Ad Soyad",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey[300] : Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _adSoyadController,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                            decoration: _inputDekorasyonu("Adınız ve Soyadınız", Icons.person_outline, isDark),
-                            validator: (val) => val!.isEmpty ? "Boş bırakılamaz" : null,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                            decoration: _inputDekorasyonu(
+                              "Adınız ve Soyadınız",
+                              Icons.person_outline,
+                              isDark,
+                            ),
+                            validator: (val) =>
+                                val!.isEmpty ? "Boş bırakılamaz" : null,
                           ),
                           const SizedBox(height: 16),
-                          
-                          Text("E-posta", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+
+                          Text(
+                            "E-posta",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey[300] : Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                            decoration: _inputDekorasyonu("mail@example.com", Icons.email_outlined, isDark),
-                            validator: (val) => val!.isEmpty || !val.contains("@") ? "Geçerli e-posta girin" : null,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                            decoration: _inputDekorasyonu(
+                              "mail@example.com",
+                              Icons.email_outlined,
+                              isDark,
+                            ),
+                            validator: (val) =>
+                                val!.isEmpty || !val.contains("@")
+                                ? "Geçerli e-posta girin"
+                                : null,
                           ),
                           const SizedBox(height: 16),
 
-                          Text("Telefon Numarası", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          Text(
+                            "Telefon Numarası",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey[300] : Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _telefonController,
                             keyboardType: TextInputType.phone,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                            decoration: _inputDekorasyonu("05XX XXX XX XX", Icons.phone_android_outlined, isDark),
-                            validator: (val) => val!.isEmpty ? "Telefon boş bırakılamaz" : null,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                            decoration: _inputDekorasyonu(
+                              "05XX XXX XX XX",
+                              Icons.phone_android_outlined,
+                              isDark,
+                            ),
+                            validator: (val) =>
+                                val!.isEmpty ? "Telefon boş bırakılamaz" : null,
                           ),
                           const SizedBox(height: 16),
 
-                          Text("Şifre", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isDark ? Colors.grey[300] : Colors.black87)),
+                          Text(
+                            "Şifre",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey[300] : Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _sifreController,
                             obscureText: _sifreGizli,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
                             decoration: InputDecoration(
                               hintText: "••••••••",
-                              hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF111827) : Colors.white,
-                              prefixIcon: Icon(Icons.lock_outline, color: isDark ? Colors.grey[500] : Colors.grey[400]),
-                              suffixIcon: IconButton(
-                                icon: Icon(_sifreGizli ? Icons.visibility_off : Icons.visibility, color: isDark ? Colors.grey[400] : Colors.grey[600]),
-                                onPressed: () => setState(() => _sifreGizli = !_sifreGizli),
+                              hintStyle: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[600]
+                                    : Colors.grey[400],
                               ),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              filled: true,
+                              fillColor: isDark
+                                  ? const Color(0xFF111827)
+                                  : Colors.white,
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: isDark
+                                    ? Colors.grey[500]
+                                    : Colors.grey[400],
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _sifreGizli
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
+                                ),
+                                onPressed: () =>
+                                    setState(() => _sifreGizli = !_sifreGizli),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[400]!),
+                                borderSide: BorderSide(
+                                  color: isDark
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[400]!,
+                                ),
                               ),
                             ),
-                            validator: (val) => val!.length < 6 ? "Şifre en az 6 karakter olmalı" : null,
+                            validator: (val) => val!.length < 6
+                                ? "Şifre en az 6 karakter olmalı"
+                                : null,
                           ),
                           const SizedBox(height: 24),
 
@@ -212,15 +297,27 @@ class _KayitEkraniState extends State<KayitEkrani> {
                               onPressed: _yukleniyor ? null : _kayitOl,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF16A34A),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                              child: _yukleniyor 
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                                  ) 
-                                : const Text("Kayıt Ol", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              child: _yukleniyor
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Kayıt Ol",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
@@ -233,12 +330,16 @@ class _KayitEkraniState extends State<KayitEkrani> {
                     children: [
                       Text(
                         "Zaten hesabınız var mı?",
-                        style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.grey[400]
+                              : const Color(0xFF6B7280),
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
                           FocusScope.of(context).unfocus();
-                          Navigator.pop(context); 
+                          Navigator.pop(context);
                         },
                         child: const Text(
                           "Giriş Yap",
@@ -265,11 +366,16 @@ class _KayitEkraniState extends State<KayitEkrani> {
       hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
       filled: true,
       fillColor: isDark ? const Color(0xFF111827) : Colors.white,
-      prefixIcon: Icon(ikon, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+      prefixIcon: Icon(
+        ikon,
+        color: isDark ? Colors.grey[500] : Colors.grey[400],
+      ),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[400]!),
+        borderSide: BorderSide(
+          color: isDark ? Colors.grey[800]! : Colors.grey[400]!,
+        ),
       ),
     );
   }

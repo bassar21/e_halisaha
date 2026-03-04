@@ -112,20 +112,19 @@ class _GirisEkraniState extends State<GirisEkrani> {
               }
             }
           } else {
-            // Verify hatası veya başka bir hata varsa error anahtarını göster
-            print("Giriş başarısız: ${sonuc['error']}");
+            debugPrint("Giriş başarısız: ${sonuc['error']}");
             _hataGoster(
               sonuc['error'] ?? "Şifre veya E-posta adresiniz hatalı!",
             );
           }
         } else {
-          print("Giriş başarısız: API null döndü (Bağlantı sorunu)");
+          debugPrint("Giriş başarısız: API null döndü (Bağlantı sorunu)");
           _hataGoster("Şifre veya E-posta adresiniz hatalı!");
         }
       } catch (e) {
-        print("--- KRİTİK GİRİŞ HATASI ---");
-        print(e);
-        print("---------------------------");
+        debugPrint("--- KRİTİK GİRİŞ HATASI ---");
+        debugPrint(e.toString());
+        debugPrint("---------------------------");
 
         setState(() => _yukleniyor = false);
         _hataGoster("Bağlantı hatası: $e");

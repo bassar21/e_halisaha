@@ -16,7 +16,7 @@ class TemaAyari {
 
   static Future<void> temaYukle() async {
     final prefs = await SharedPreferences.getInstance();
-    final bool isDark = prefs.getBool('koyu_tema_acik') ?? false; 
+    final bool isDark = prefs.getBool('koyu_tema_acik') ?? false;
     temaModu.value = isDark ? ThemeMode.dark : ThemeMode.light;
   }
 
@@ -182,53 +182,92 @@ class _RandevularimSayfasiState extends State<RandevularimSayfasi> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Rezervasyonlarım", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Rezervasyonlarım",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
-        titleTextStyle: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontSize: 20, fontWeight: FontWeight.bold),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF111827),
+        ),
+        titleTextStyle: TextStyle(
+          color: isDark ? Colors.white : const Color(0xFF111827),
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       body: _yukleniyor
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF16A34A)),
+            )
           : _randevular.isEmpty
-              ? _bosEkranGoster()
-              : RefreshIndicator(
-                  onRefresh: _verileriYukle,
-                  color: const Color(0xFF16A34A),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _randevular.length,
-                    itemBuilder: (context, index) => _randevuKarti(_randevular[index]),
-                  ),
-                ),
+          ? _bosEkranGoster()
+          : RefreshIndicator(
+              onRefresh: _verileriYukle,
+              color: const Color(0xFF16A34A),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(20),
+                itemCount: _randevular.length,
+                itemBuilder: (context, index) =>
+                    _randevuKarti(_randevular[index]),
+              ),
+            ),
     );
   }
 
   Widget _randevuKarti(dynamic randevu) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final String pitchName = (randevu['pitch_name'] ?? "Bilinmeyen Saha").toString();
-    final String facilityName = (randevu['facility_name'] ?? "Tesis Bilgisi Yok").toString();
-    final String status = (randevu['status'] ?? "pending").toString().toLowerCase();
-    
+    final String pitchName = (randevu['pitch_name'] ?? "Bilinmeyen Saha")
+        .toString();
+    final String facilityName =
+        (randevu['facility_name'] ?? "Tesis Bilgisi Yok").toString();
+    final String status = (randevu['status'] ?? "pending")
+        .toString()
+        .toLowerCase();
+
     String formatliTarih = "Bilinmeyen Tarih";
     String saatString = "--:--";
-    
+
     try {
       if (randevu['start_time'] != null) {
-        DateTime tarih = DateTime.parse(randevu['start_time'].toString()).toLocal();
-        List<String> aylar = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        DateTime tarih = DateTime.parse(
+          randevu['start_time'].toString(),
+        ).toLocal();
+        List<String> aylar = [
+          "",
+          "Ocak",
+          "Şubat",
+          "Mart",
+          "Nisan",
+          "Mayıs",
+          "Haziran",
+          "Temmuz",
+          "Ağustos",
+          "Eylül",
+          "Ekim",
+          "Kasım",
+          "Aralık",
+        ];
         formatliTarih = "${tarih.day} ${aylar[tarih.month]} ${tarih.year}";
-        saatString = "${tarih.hour.toString().padLeft(2, '0')}:${tarih.minute.toString().padLeft(2, '0')}";
+        saatString =
+            "${tarih.hour.toString().padLeft(2, '0')}:${tarih.minute.toString().padLeft(2, '0')}";
       }
-    } catch (e) { /**/ }
+    } catch (e) {
+      /**/
+    }
 
-    Color durumKutuRengi = isDark ? Colors.amber.withOpacity(0.1) : const Color(0xFFFEF3C7);
+    Color durumKutuRengi = isDark
+        ? Colors.amber.withOpacity(0.1)
+        : const Color(0xFFFEF3C7);
     Color durumYaziRengi = Colors.amber;
     String durumMetni = "Beklemede";
 
     if (status == 'confirmed' || status == 'onaylandı') {
-      durumKutuRengi = isDark ? Colors.blue.withOpacity(0.1) : const Color(0xFFDBEAFE);
+      durumKutuRengi = isDark
+          ? Colors.blue.withOpacity(0.1)
+          : const Color(0xFFDBEAFE);
       durumYaziRengi = Colors.blue;
       durumMetni = "Onaylandı";
     }
@@ -239,31 +278,66 @@ class _RandevularimSayfasiState extends State<RandevularimSayfasi> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFF16A34A).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.sports_soccer, color: Color(0xFF16A34A), size: 28),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16A34A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.sports_soccer,
+              color: Color(0xFF16A34A),
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(pitchName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black)),
-                Text(facilityName, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                Text(
+                  pitchName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                Text(
+                  facilityName,
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
                 const SizedBox(height: 8),
-                Text("$formatliTarih | $saatString", style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87)),
+                Text(
+                  "$formatliTarih | $saatString",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: durumKutuRengi, borderRadius: BorderRadius.circular(8)),
-            child: Text(durumMetni, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: durumYaziRengi)),
+            decoration: BoxDecoration(
+              color: durumKutuRengi,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              durumMetni,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: durumYaziRengi,
+              ),
+            ),
           ),
         ],
       ),
@@ -275,14 +349,26 @@ class _RandevularimSayfasiState extends State<RandevularimSayfasi> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.sports_soccer_outlined, size: 80, color: Colors.grey),
+          const Icon(
+            Icons.sports_soccer_outlined,
+            size: 80,
+            color: Colors.grey,
+          ),
           const SizedBox(height: 16),
-          const Text("Henüz bir maçın yok!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Henüz bir maçın yok!",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-            child: const Text("Saha Ara", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+            ),
+            child: const Text(
+              "Saha Ara",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -338,11 +424,16 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Ayarlar", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Ayarlar",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF111827),
+        ),
       ),
       // YÜZEN TICKET BUTONU
       floatingActionButton: FloatingActionButton(
@@ -356,17 +447,39 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
         padding: const EdgeInsets.all(20),
         children: [
           _ayarGrubu("Uygulama Ayarları", [
-            _ayarSatiriSwitch(Icons.notifications_none_rounded, "Bildirimler", "Bildirimleri yönet", _bildirimAcik, (v) => setState(() => _bildirimAcik = v)),
-            _ayarSatiriSwitch(Icons.dark_mode_outlined, "Koyu Tema", isDark ? "Karanlık Mod" : "Aydınlık Mod", isDark, (v) {
-              TemaAyari.temaDegistir(v);
-            }),
+            _ayarSatiriSwitch(
+              Icons.notifications_none_rounded,
+              "Bildirimler",
+              "Bildirimleri yönet",
+              _bildirimAcik,
+              (v) => setState(() => _bildirimAcik = v),
+            ),
+            _ayarSatiriSwitch(
+              Icons.dark_mode_outlined,
+              "Koyu Tema",
+              isDark ? "Karanlık Mod" : "Aydınlık Mod",
+              isDark,
+              (v) {
+                TemaAyari.temaDegistir(v);
+              },
+            ),
           ]),
           const SizedBox(height: 24),
           _ayarGrubu("Destek", [
-            _ayarSatiri(Icons.help_outline_rounded, "Yardım Merkezi", "S.S.S.", () {}),
+            _ayarSatiri(
+              Icons.help_outline_rounded,
+              "Yardım Merkezi",
+              "S.S.S.",
+              () {},
+            ),
             GizliVideoTetikleyici(
-              videoYolu: 'assets/video.mp4', 
-              child: _ayarSatiri(Icons.info_outline_rounded, "Uygulama Hakkında", "Versiyon 1.0.0", () {}),
+              videoYolu: 'assets/video.mp4',
+              child: _ayarSatiri(
+                Icons.info_outline_rounded,
+                "Uygulama Hakkında",
+                "Versiyon 1.0.0",
+                () {},
+              ),
             ),
           ]),
         ],
@@ -380,7 +493,14 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(baslik, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+          child: Text(
+            baslik,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF16A34A),
+            ),
+          ),
         ),
         Container(
           decoration: BoxDecoration(
@@ -393,24 +513,45 @@ class _AyarlarSayfasiState extends State<AyarlarSayfasi> {
     );
   }
 
-  Widget _ayarSatiri(IconData ikon, String baslik, String altBaslik, VoidCallback onTap) {
+  Widget _ayarSatiri(
+    IconData ikon,
+    String baslik,
+    String altBaslik,
+    VoidCallback onTap,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       leading: Icon(ikon, color: const Color(0xFF16A34A)),
-      title: Text(baslik, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+      title: Text(
+        baslik,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+      ),
       subtitle: Text(altBaslik),
       trailing: const Icon(Icons.chevron_right, size: 20),
       onTap: onTap,
     );
   }
 
-  Widget _ayarSatiriSwitch(IconData ikon, String baslik, String altBaslik, bool deger, Function(bool) onChanged) {
+  Widget _ayarSatiriSwitch(
+    IconData ikon,
+    String baslik,
+    String altBaslik,
+    bool deger,
+    Function(bool) onChanged,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       leading: Icon(ikon, color: const Color(0xFF16A34A)),
-      title: Text(baslik, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+      title: Text(
+        baslik,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+      ),
       subtitle: Text(altBaslik),
-      trailing: Switch(value: deger, onChanged: onChanged, activeColor: const Color(0xFF16A34A)),
+      trailing: Switch(
+        value: deger,
+        onChanged: onChanged,
+        activeThumbColor: const Color(0xFF16A34A),
+      ),
     );
   }
 }
@@ -442,7 +583,7 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
     if (_mesajController.text.trim().isEmpty) return;
 
     setState(() => _gonderiliyor = true);
-    
+
     // Kullanıcı ID'sini ve cihazı al
     final user = await KimlikServisi.kullaniciGetir();
     int userId = user?['id'] ?? user?['userId'] ?? 0;
@@ -462,11 +603,17 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
     if (basarili) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Geri bildiriminiz ulaştı. Teşekkürler!"), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text("Geri bildiriminiz ulaştı. Teşekkürler!"),
+          backgroundColor: Colors.green,
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Gönderilirken bir hata oluştu."), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text("Gönderilirken bir hata oluştu."),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -474,11 +621,13 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 24, right: 24, top: 24
+        left: 24,
+        right: 24,
+        top: 24,
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
@@ -492,12 +641,30 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Destek Talebi / Öneri", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                IconButton(icon: Icon(Icons.close, color: isDark ? Colors.white54 : Colors.black54), onPressed: () => Navigator.pop(context)),
+                Text(
+                  "Destek Talebi / Öneri",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    color: isDark ? Colors.white54 : Colors.black54,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            Text("Yaşadığınız sorunu veya önerinizi detaylıca yazın.", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[700])),
+            Text(
+              "Yaşadığınız sorunu veya önerinizi detaylıca yazın.",
+              style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey[700],
+              ),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _mesajController,
@@ -505,10 +672,15 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
               style: TextStyle(color: isDark ? Colors.white : Colors.black),
               decoration: InputDecoration(
                 hintText: "Buraya yazın...",
-                hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                ),
                 filled: true,
                 fillColor: isDark ? const Color(0xFF111827) : Colors.grey[100],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -519,13 +691,15 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
                   icon: const Icon(Icons.image, size: 18),
                   label: const Text("Ekran Görüntüsü Ekle"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                    backgroundColor: isDark
+                        ? Colors.grey[800]
+                        : Colors.grey[200],
                     foregroundColor: isDark ? Colors.white : Colors.black87,
                     elevation: 0,
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (_secilenResim != null) 
+                if (_secilenResim != null)
                   const Icon(Icons.check_circle, color: Colors.green),
               ],
             ),
@@ -537,11 +711,20 @@ class _GeriBildirimFormuState extends State<_GeriBildirimFormu> {
                 onPressed: _gonderiliyor ? null : _gonder,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: _gonderiliyor 
-                  ? const CircularProgressIndicator(color: Colors.white) 
-                  : const Text("Gönder", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: _gonderiliyor
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Gönder",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 24),
@@ -565,7 +748,7 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
   final ApiServisi _apiServisi = ApiServisi();
   late TextEditingController _adController;
   late TextEditingController _emailController;
-  late TextEditingController _telefonController; 
+  late TextEditingController _telefonController;
   bool _yukleniyor = true;
   bool _kaydediliyor = false;
 
@@ -576,7 +759,7 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
     super.initState();
     _adController = TextEditingController();
     _emailController = TextEditingController();
-    _telefonController = TextEditingController(); 
+    _telefonController = TextEditingController();
     _verileriGetir();
   }
 
@@ -587,24 +770,25 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
         _mevcutKullanici = user;
         _adController.text = user['fullName'] ?? user['name'] ?? "";
         _emailController.text = user['email'] ?? "";
-        _telefonController.text = user['phone'] ?? user['phoneNumber'] ?? ""; 
+        _telefonController.text = user['phone'] ?? user['phoneNumber'] ?? "";
         _yukleniyor = false;
       });
     } else {
-      if(mounted) setState(() => _yukleniyor = false);
+      if (mounted) setState(() => _yukleniyor = false);
     }
   }
 
   Future<void> _bilgileriGuncelle() async {
-    if (!_formKey.currentState!.validate()) return; 
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _kaydediliyor = true; 
+      _kaydediliyor = true;
     });
 
     try {
       if (_mevcutKullanici != null) {
-        int userId = _mevcutKullanici!['id'] ?? _mevcutKullanici!['userId'] ?? 0;
+        int userId =
+            _mevcutKullanici!['id'] ?? _mevcutKullanici!['userId'] ?? 0;
 
         bool backendBasarili = await _apiServisi.profilGuncelle(
           userId,
@@ -614,7 +798,9 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
         );
 
         if (!backendBasarili) {
-          throw Exception("Sunucuya bağlanırken veya veriyi güncellerken hata oluştu.");
+          throw Exception(
+            "Sunucuya bağlanırken veya veriyi güncellerken hata oluştu.",
+          );
         }
 
         _mevcutKullanici!['name'] = _adController.text;
@@ -624,28 +810,34 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
         _mevcutKullanici!['phoneNumber'] = _telefonController.text;
 
         final prefs = await SharedPreferences.getInstance();
-        
+
         String? userStr = prefs.getString('user');
         if (userStr != null) {
           await prefs.setString('user', jsonEncode(_mevcutKullanici));
         } else {
           await prefs.setString('kullanici', jsonEncode(_mevcutKullanici));
         }
-        
+
         await prefs.setString('name', _adController.text);
         await prefs.setString('email', _emailController.text);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Profil başarıyla kaydedildi!"), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text("Profil başarıyla kaydedildi!"),
+              backgroundColor: Colors.green,
+            ),
           );
-          Navigator.pop(context, true); 
+          Navigator.pop(context, true);
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll("Exception: ", "")), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.toString().replaceAll("Exception: ", "")),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -661,7 +853,7 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
   void dispose() {
     _adController.dispose();
     _emailController.dispose();
-    _telefonController.dispose(); 
+    _telefonController.dispose();
     super.dispose();
   }
 
@@ -672,14 +864,19 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Profili Düzenle", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Profili Düzenle",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black,
       ),
       body: _yukleniyor
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF16A34A)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -689,29 +886,56 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: const Color(0xFF16A34A).withOpacity(0.1),
-                      child: const Icon(Icons.person, size: 50, color: Color(0xFF16A34A)),
+                      child: const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Color(0xFF16A34A),
+                      ),
                     ),
                     const SizedBox(height: 30),
                     TextFormField(
                       controller: _adController,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                      decoration: _dekorasyon("Ad Soyad", Icons.person_outline, isDark),
-                      validator: (value) => value == null || value.isEmpty ? "Ad Soyad boş olamaz" : null,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      decoration: _dekorasyon(
+                        "Ad Soyad",
+                        Icons.person_outline,
+                        isDark,
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? "Ad Soyad boş olamaz"
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                      decoration: _dekorasyon("E-posta", Icons.email_outlined, isDark),
-                      validator: (value) => value == null || !value.contains('@') ? "Geçerli bir e-posta girin" : null,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      decoration: _dekorasyon(
+                        "E-posta",
+                        Icons.email_outlined,
+                        isDark,
+                      ),
+                      validator: (value) =>
+                          value == null || !value.contains('@')
+                          ? "Geçerli bir e-posta girin"
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _telefonController,
                       keyboardType: TextInputType.phone,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                      decoration: _dekorasyon("Telefon Numarası", Icons.phone_android_outlined, isDark),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      decoration: _dekorasyon(
+                        "Telefon Numarası",
+                        Icons.phone_android_outlined,
+                        isDark,
+                      ),
                     ),
                     const SizedBox(height: 40),
                     SizedBox(
@@ -720,14 +944,25 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF16A34A),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
                         onPressed: _kaydediliyor ? null : _bilgileriGuncelle,
-                        child: _kaydediliyor 
-                          ? const CircularProgressIndicator(color: Colors.white) 
-                          : const Text("Kaydet", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        child: _kaydediliyor
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "Kaydet",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -738,11 +973,16 @@ class _ProfilDuzenleSayfasiState extends State<ProfilDuzenleSayfasi> {
   InputDecoration _dekorasyon(String etiket, IconData ikon, bool isDark) {
     return InputDecoration(
       labelText: etiket,
-      labelStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+      labelStyle: TextStyle(
+        color: isDark ? Colors.grey[400] : Colors.grey[600],
+      ),
       prefixIcon: Icon(ikon, color: const Color(0xFF16A34A)),
       filled: true,
       fillColor: isDark ? const Color(0xFF1F2937) : Colors.grey[100],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(color: Color(0xFF16A34A), width: 1.5),
