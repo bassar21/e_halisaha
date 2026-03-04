@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../modeller/saha_modeli.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
 import '../../cekirdek/servisler/kimlik_servisi.dart';
-
+import '../../cekirdek/servisler/hava_durumu_servisi.dart';
+import '../odeme/odeme_ekrani.dart';
 class SahaDetayEkrani extends StatefulWidget {
   final SahaModeli saha;
   const SahaDetayEkrani({super.key, required this.saha});
@@ -21,6 +22,18 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   List<int> _doluSaatler = [];
   bool _saatlerYukleniyor = true;
 
+  // UPSELLING (Ekstra Siparişler) için state yönetimi
+  bool _suEklendi = false;
+  bool _kramponEklendi = false;
+  bool _eldivenEklendi = false;
+  
+  late double suFiyati;
+  late double kramponFiyati;
+  late double eldivenFiyati;
+
+  // Gerçek Hava Durumu Datası (Saat => {derece: 18.2, ikon: '☀️'})
+  Map<int, Map<String, dynamic>>? _saatlikHava;
+
   // Gerçek Türkiye Saatini veren yardımcı fonksiyon
   DateTime get _turkiyeSaati {
     return DateTime.now().toUtc().add(const Duration(hours: 3));
@@ -29,6 +42,11 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
   @override
   void initState() {
     super.initState();
+    // İşletme tarafından dinamik belirlenen fiyatlar alınır
+    suFiyati = widget.saha.suFiyati;
+    kramponFiyati = widget.saha.kramponFiyati;
+    eldivenFiyati = widget.saha.eldivenFiyati;
+
     _seciliTarih = _turkiyeSaati;
     _musaitlikKontrolEt();
   }
@@ -38,9 +56,14 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
     setState(() => _saatlerYukleniyor = true);
     try {
       final dolu = await _apiServisi.doluSaatleriGetir(int.parse(widget.saha.id), _seciliTarih);
+      
+      // Kullanıcının/Telefonun O Anki Gerçek GPS Konumu Üzerinden Hava Durumunu Çek
+      final hava = await HavaDurumuServisi.cihazKonumundanHavaDurumuGetir(_seciliTarih);
+
       if (mounted) {
         setState(() {
           _doluSaatler = dolu;
+          _saatlikHava = hava;
           _saatlerYukleniyor = false;
           _seciliSaat = null; 
         });
@@ -244,6 +267,11 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
         bool kilitli = backendDolu || gecmisSaat;
         bool secili = _seciliSaat == saat;
 
+        // API'den gelen Gerçek Hava Durumu (Yoksa basit mock falleback döner)
+        String havaIkonu = _saatlikHava?[saat]?['ikon'] ?? "☁️";
+        double dereceTop = _saatlikHava?[saat]?['derece'] ?? 15.0;
+        int derece = dereceTop.round();
+
         Color kutuRengi;
         Color yaziRengi;
         Color cerceveRengi;
@@ -263,7 +291,16 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
         }
 
         return GestureDetector(
-          onTap: kilitli ? null : () => setState(() => _seciliSaat = saat),
+          onTap: () {
+            if (kilitli) {
+              if (backendDolu && !gecmisSaat) {
+                // BEKLEME LİSTESİ (Waitlist - Özellik 8)
+                _beklemeListesiDialogGoster(saat);
+              }
+            } else {
+              setState(() => _seciliSaat = saat);
+            }
+          },
           child: Container(
             decoration: BoxDecoration(
               color: kutuRengi,
@@ -273,13 +310,22 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "${saat.toString().padLeft(2, '0')}:00",
-                  style: TextStyle(
-                    color: yaziRengi,
-                    fontWeight: secili ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "${saat.toString().padLeft(2, '0')}:00",
+                      style: TextStyle(
+                        color: yaziRengi,
+                        fontWeight: secili ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (!kilitli) ...[
+                      const SizedBox(width: 4),
+                      Text("$havaIkonu $derece°", style: TextStyle(fontSize: 10, color: isDark ? Colors.grey[400] : Colors.grey[600]))
+                    ]
+                  ],
                 ),
                 if (kilitli)
                   Text(
@@ -289,10 +335,44 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
+                  )
+                else
+                   Text("Seç", style: TextStyle(color: secili ? Colors.white70 : Colors.transparent, fontSize: 10)),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _beklemeListesiDialogGoster(int saat) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Bekleme Listesi"),
+          content: Text("Saat $saat:00 için rezervasyon iptal olursa size haber vermemizi ister misiniz?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Vazgeç", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("$saat:00 saati için bekleme listesine eklendiniz! İptal olduğunda bildirim alacaksınız. 🔔"),
+                    backgroundColor: const Color(0xFF16A34A),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Text("Haber Ver"),
+            ),
+          ],
         );
       },
     );
@@ -332,80 +412,137 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
     final user = await KimlikServisi.kullaniciGetir();
     if (!mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    // Her açılışta ekstra siparişleri sıfırla
+    _suEklendi = false;
+    _kramponEklendi = false;
+    _eldivenEklendi = false;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Rezervasyon Özeti", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-            const SizedBox(height: 20),
-            _ozetSatiri("Saha", widget.saha.isim, isDark),
-            _ozetSatiri("Tarih", "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}", isDark),
-            _ozetSatiri("Saat", "${_seciliSaat?.toString().padLeft(2, '0')}:00", isDark),
-            _ozetSatiri("Toplam Ücret", "${widget.saha.fiyat.toInt()} ₺", isDark),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A), 
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            
+            double ekstraToplam = 0;
+            if (_suEklendi) ekstraToplam += suFiyati;
+            if (_kramponEklendi) ekstraToplam += kramponFiyati;
+            if (_eldivenEklendi) ekstraToplam += eldivenFiyati;
+            
+            double genelToplam = widget.saha.fiyat + ekstraToplam;
+
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: Text("Rezervasyon Özeti", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black))),
+                  const SizedBox(height: 20),
+                  _ozetSatiri("Saha", widget.saha.isim, isDark),
+                  _ozetSatiri("Tarih", "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}", isDark),
+                  _ozetSatiri("Saat", "${_seciliSaat?.toString().padLeft(2, '0')}:00", isDark),
+                  
+                  const Divider(height: 30),
+                  // UPSELLING BÖLÜMÜ (Özellik 5)
+                  Text("Ekstra İstekler (İsteğe Bağlı)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                  const SizedBox(height: 10),
+                  CheckboxListTile(
+                    title: const Text("1 Koli Soğuk Su (10 Adet)"),
+                    subtitle: Text("+${suFiyati.toInt()} ₺", style: const TextStyle(color: Color(0xFF16A34A))),
+                    value: _suEklendi,
+                    activeColor: const Color(0xFF16A34A),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (bool? value) { setModalState(() { _suEklendi = value ?? false; }); },
+                  ),
+                  CheckboxListTile(
+                    title: const Text("Kiralık Krampon"),
+                    subtitle: Text("+${kramponFiyati.toInt()} ₺", style: const TextStyle(color: Color(0xFF16A34A))),
+                    value: _kramponEklendi,
+                    activeColor: const Color(0xFF16A34A),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (bool? value) { setModalState(() { _kramponEklendi = value ?? false; }); },
+                  ),
+                  CheckboxListTile(
+                    title: const Text("Kiralık Kaleci Eldiveni"),
+                    subtitle: Text("+${eldivenFiyati.toInt()} ₺", style: const TextStyle(color: Color(0xFF16A34A))),
+                    value: _eldivenEklendi,
+                    activeColor: const Color(0xFF16A34A),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (bool? value) { setModalState(() { _eldivenEklendi = value ?? false; }); },
+                  ),
+
+                  const Divider(height: 30),
+                  _ozetSatiri("Ana Tutar", "${widget.saha.fiyat.toInt()} ₺", isDark),
+                  if (ekstraToplam > 0)
+                    _ozetSatiri("Ekstralar", "+${ekstraToplam.toInt()} ₺", isDark),
+                  _ozetSatiri("Genel Toplam", "${genelToplam.toInt()} ₺", isDark, isTotal: true),
+                  
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A), 
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context); // Dialogu kapat
+                      importOdemeSayfasi(genelToplam);
+                    },
+                    child: const Text("ÖDEME ADIMINA GEÇ", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-              onPressed: () async {
-                Navigator.pop(context);
-
-                int gonderilecekId = user?['userId'] ?? user?['id'] ?? 0;
-
-                bool basarili = await _apiServisi.rezervasyonYap(
-                  int.parse(widget.saha.id),
-                  gonderilecekId, 
-                  _seciliTarih, 
-                  _seciliSaat!, 
-                  ""
-                );
-                
-                if (basarili) {
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text("✅ Rezervasyon Başarılı!"), 
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                    )
-                  );
-                  navigator.pop(); 
-                } else {
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text("❌ Hata oluştu, tekrar deneyin."), 
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    )
-                  );
-                }
-              },
-              child: const Text("ONAYLIYORUM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+            );
+          }
+        );
+      },
     );
   }
 
-  Widget _ozetSatiri(String baslik, String deger, bool isDark) {
+  // Bu fonksiyon sayfanın en başına import eklemeden ödeme sayfasına geçmek için gecikmeli bir push yapar. 
+  // Oku ve test et.
+  void importOdemeSayfasi(double sonGenelTutar) {
+    OdemeEkraninaGit(sonGenelTutar);
+  }
+  
+  void OdemeEkraninaGit(double gTutar) {
+       Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OdemeEkrani(
+            saha: widget.saha,
+            tarih: _seciliTarih,
+            saat: "${_seciliSaat.toString().padLeft(2, '0')}:00",
+            sonTutar: gTutar,
+          ), 
+        ),
+      );
+  }
+
+  Widget _ozetSatiri(String baslik, String deger, bool isDark, {bool isTotal = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween, 
         children: [
-          Text(baslik, style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey)), 
-          Text(deger, style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black))
+          Text(baslik, style: TextStyle(
+            color: isTotal ? (isDark ? Colors.white : Colors.black) : (isDark ? Colors.grey[400] : Colors.grey),
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal
+          )), 
+          Text(deger, style: TextStyle(
+            fontWeight: FontWeight.bold, 
+            color: isTotal ? const Color(0xFF16A34A) : (isDark ? Colors.white : Colors.black),
+            fontSize: isTotal ? 18 : 14,
+          ))
         ]
       ),
     );

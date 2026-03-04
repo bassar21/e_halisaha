@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
-import 'dogrulama_ekrani.dart'; // Bu importu eklediğinden emin ol
+import '../../cekirdek/servisler/api_servisi.dart';
 
 class KayitEkrani extends StatefulWidget {
   const KayitEkrani({super.key});
@@ -65,13 +65,8 @@ class _KayitEkraniState extends State<KayitEkrani> {
             ),
           );
           
-          // BAŞARILI: Kullanıcıyı artık Doğrulama Ekranına yönlendiriyoruz
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DogrulamaEkrani(email: _emailController.text.trim()),
-            ),
-          );
+          // DOĞRULAMAYI ATLIP DİREKT POP YAPARAK LOGİNE DÖNDÜRÜYORUZ
+          Navigator.pop(context);
         } else {
           _hataGoster(sonuc['error'] ?? "Kayıt işlemi başarısız.");
         }

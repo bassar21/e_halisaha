@@ -10,6 +10,11 @@ class SahaModeli {
   final List<String> ozellikler;
   final String isletmeSahibiEmail;
   final String? ownerId;
+  
+  // Upselling Dinamik Fiyatları
+  double suFiyati;
+  double kramponFiyati;
+  double eldivenFiyati;
 
   SahaModeli({
     required this.id,
@@ -23,6 +28,9 @@ class SahaModeli {
     required this.ozellikler,
     required this.isletmeSahibiEmail,
     this.ownerId,
+    this.suFiyati = 20.0,
+    this.kramponFiyati = 70.0,
+    this.eldivenFiyati = 40.0,
   });
 
   factory SahaModeli.fromMap(Map<String, dynamic> map) {
@@ -38,6 +46,9 @@ class SahaModeli {
       ozellikler: List<String>.from(map['ozellikler'] ?? []),
       isletmeSahibiEmail: map['isletmeSahibiEmail'] ?? "",
       ownerId: map['ownerId']?.toString(),
+      suFiyati: map['suFiyati'] ?? 20.0,
+      kramponFiyati: map['kramponFiyati'] ?? 70.0,
+      eldivenFiyati: map['eldivenFiyati'] ?? 40.0,
     );
   }
 }
