@@ -24,6 +24,7 @@ router.get('/', async (req, res) => {
             SELECT 
                 p.id, p.name, p.hourly_price as price, p.deposit_price as deposit, 
                 p.type, p.capacity, p.opening_hour, p.closing_hour, p.slot_duration,
+                p.water_price, p.cleats_price, p.gloves_price,
                 f.address, f.district, f.city, f.image_url, f.owner_id,
                 u.email as owner_email
             FROM pitches p
@@ -89,7 +90,12 @@ router.post('/', authMiddleware, roleMiddleware('isletme', 'admin', 'sahasahibi'
 router.put('/:pitchId', authMiddleware, roleMiddleware('isletme', 'admin', 'sahasahibi'), async (req, res) => {
     try {
         const { pitchId } = req.params;
-        const updatePrice = req.body.hourlyPrice || req.body.price;
+        const updatePrice = req.body.hourlyPrice || req.body.price || req.body.hourly_price;
+        const waterPrice = req.body.water_price;
+        const cleatsPrice = req.body.cleats_price;
+        const glovesPrice = req.body.gloves_price;
+
+        console.log(`[PITCH UPDATE REQUEST] PitchID: ${pitchId} | Price: ${updatePrice} | Water: ${waterPrice} | Cleats: ${cleatsPrice} | Gloves: ${glovesPrice}`);
 
         if (!updatePrice) {
             return res.status(400).json({ success: false, error: 'Fiyat bilgisi eksik (hourlyPrice veya price)' });
@@ -97,9 +103,13 @@ router.put('/:pitchId', authMiddleware, roleMiddleware('isletme', 'admin', 'saha
 
         const resUpdate = await db.query(`
             UPDATE pitches 
-            SET hourly_price = $1, updated_at = NOW() 
-            WHERE id = $2 RETURNING *
-        `, [updatePrice, pitchId]);
+            SET hourly_price = $1, 
+                water_price = COALESCE($2, water_price), 
+                cleats_price = COALESCE($3, cleats_price), 
+                gloves_price = COALESCE($4, gloves_price), 
+                updated_at = NOW() 
+            WHERE id = $5 RETURNING *
+        `, [updatePrice, waterPrice, cleatsPrice, glovesPrice, pitchId]);
 
         if (resUpdate.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Saha bulunamadı' });

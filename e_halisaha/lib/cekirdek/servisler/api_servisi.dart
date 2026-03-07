@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'kimlik_servisi.dart';
 import '../../modeller/saha_modeli.dart';
+import 'package:flutter/material.dart';
+import '../../main.dart';
 
 class ApiServisi {
   static const String _baseUrl = "http://185.157.46.167:3000/api";
@@ -14,6 +16,26 @@ class ApiServisi {
       "Content-Type": "application/json",
       if (token != null) "Authorization": "Bearer $token",
     };
+  }
+
+  void _yetkiKontrolu(int statusCode, {bool ignoreRedirect = false}) {
+    if (statusCode == 401) {
+      debugPrint("JWT Hatası: yetkisiz erişim/token yok.");
+      KimlikServisi.tokenGetir().then((token) {
+        if (token != null) {
+          // Sadece daha önce token varsa ve süresi dolduysa çıkış yap.
+          KimlikServisi.cikisYap().then((_) {
+            if (!ignoreRedirect && globalNavigatorKey.currentContext != null) {
+              Navigator.pushNamedAndRemoveUntil(
+                globalNavigatorKey.currentContext!,
+                '/login',
+                (route) => false,
+              );
+            }
+          });
+        }
+      });
+    }
   }
 
   // --- KAYIT OL (GÜNCELLENDİ: ARTIK MAP DÖNÜYOR) ---
@@ -118,6 +140,7 @@ class ApiServisi {
       final headers = await _headers();
       debugPrint("Kullanıcıları getirme isteği başlatıldı. Headers: $headers");
       final r = await http.get(Uri.parse('$_baseUrl/users'), headers: headers);
+      _yetkiKontrolu(r.statusCode, ignoreRedirect: true);
       debugPrint("Kullanıcılar Yanıt Kodu: ${r.statusCode}");
       debugPrint("Kullanıcılar Yanıt İçeriği: ${r.body}");
       if (r.statusCode == 200) {
@@ -149,6 +172,7 @@ class ApiServisi {
       if (r.statusCode == 404) {
         r = await http.patch(url, headers: headers, body: body);
       }
+      _yetkiKontrolu(r.statusCode);
       return r.statusCode == 200 || r.statusCode == 204;
     } catch (e) {
       return false;
@@ -219,6 +243,7 @@ class ApiServisi {
   Future<List<SahaModeli>> tumSahalariGetir() async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl/pitches'));
+      _yetkiKontrolu(response.statusCode, ignoreRedirect: true);
       if (response.statusCode == 200) {
         final resData = jsonDecode(response.body);
         List<dynamic> sahalarJson = resData['data'] ?? [];
@@ -255,6 +280,9 @@ class ApiServisi {
             "ownerId": json['owner_id']?.toString(),
             "acilisSaati": json['opening_hour'] ?? 8,
             "kapanisSaati": json['closing_hour'] ?? 23,
+            "suFiyati": json['water_price'],
+            "kramponFiyati": json['cleats_price'],
+            "eldivenFiyati": json['gloves_price'],
           });
         }).toList();
       }
@@ -302,7 +330,13 @@ class ApiServisi {
     }
   }
 
-  Future<bool> sahaFiyatGuncelle(int id, double yeniFiyat) async {
+  Future<bool> sahaFiyatGuncelle(
+    int id,
+    double yeniFiyat,
+    double suFiyati,
+    double krampon,
+    double eldiven,
+  ) async {
     try {
       final r = await http.put(
         Uri.parse('$_baseUrl/pitches/$id'),
@@ -310,6 +344,9 @@ class ApiServisi {
         body: jsonEncode({
           "hourly_price": yeniFiyat,
           "price": yeniFiyat,
+          "water_price": suFiyati,
+          "cleats_price": krampon,
+          "gloves_price": eldiven,
         }), // Her iki formatı da giden JSON'a ekliyoruz
       );
       return r.statusCode == 200 || r.statusCode == 201;
@@ -353,6 +390,7 @@ class ApiServisi {
         Uri.parse('$_baseUrl/bookings/my'),
         headers: await _headers(),
       );
+      _yetkiKontrolu(r.statusCode);
       if (r.statusCode == 200) {
         final data = jsonDecode(r.body);
         if (data is List) return data;
@@ -452,6 +490,7 @@ class ApiServisi {
         Uri.parse('$_baseUrl/tickets'),
         headers: await _headers(),
       );
+      _yetkiKontrolu(r.statusCode);
       if (r.statusCode == 200) {
         final decoded = jsonDecode(r.body);
         return decoded['data'] ?? [];

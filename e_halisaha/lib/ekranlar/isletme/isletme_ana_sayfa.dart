@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
@@ -95,6 +94,8 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -108,7 +109,9 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.orange.shade800, Colors.orange.shade400],
+              colors: isDark
+                  ? [Colors.orange.shade900, Colors.deepOrange.shade900]
+                  : [Colors.orange.shade800, Colors.orange.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -136,7 +139,9 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.grey.shade50, Colors.grey.shade200],
+            colors: isDark
+                ? [const Color(0xFF121212), const Color(0xFF1E1E1E)]
+                : [Colors.grey.shade50, Colors.grey.shade200],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -155,6 +160,8 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
   }
 
   Widget _buildSahamYokEkrani() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -172,7 +179,12 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.orange.shade100, Colors.white],
+                        colors: isDark
+                            ? [
+                                Colors.orange.withValues(alpha: 0.2),
+                                const Color(0xFF2C2C2C),
+                              ]
+                            : [Colors.orange.shade100, Colors.white],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -195,12 +207,12 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
               },
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               "Sahanız Henüz Yok",
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
-                color: Colors.black87,
+                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
             const SizedBox(height: 12),
@@ -208,7 +220,7 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
               "İşletmeniz için müşteri kabul etmeye başlamak adına ilk adımınızı atın ve sahanızı oluşturun.",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: isDark ? Colors.white70 : Colors.grey.shade600,
                 fontSize: 16,
                 height: 1.4,
               ),
@@ -242,6 +254,8 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
   }
 
   Widget _buildSahaVeRandevular(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -250,11 +264,13 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
           // Glassmorphic tarzı saha bilgi kartı
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: isDark
+                      ? Colors.black45
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -420,12 +436,12 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
+                Text(
                   "Gelen Randevular",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
               ],
@@ -470,12 +486,18 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white12
+                                : Colors.grey.shade200,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -491,8 +513,10 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                             width: 50,
                             decoration: BoxDecoration(
                               color: aktifMi
-                                  ? Colors.green.shade50
-                                  : Colors.grey.shade100,
+                                  ? Colors.green.withValues(alpha: 0.2)
+                                  : (isDark
+                                        ? Colors.white12
+                                        : Colors.grey.shade100),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -502,18 +526,21 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                           ),
                           title: Text(
                             "Saat: ${randevu['rezHour'].toString().padLeft(2, '0')}:00",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                           subtitle: Padding(
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
-                              "Tarih: $tarih\nNot: ${randevu['note'] ?? 'Belirtilmedi'}",
+                              "Tarih: $tarih\nNot: ${randevu['notes'] ?? randevu['note'] ?? 'Belirtilmedi'}",
                               style: TextStyle(
                                 height: 1.4,
-                                color: Colors.grey.shade600,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade600,
                               ),
                             ),
                           ),
@@ -528,6 +555,8 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
   }
 
   void _fiyatAyarlariniGoster() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     TextEditingController fiyatController = TextEditingController(
       text: _benimSaham!.fiyat.toInt().toString(),
     );
@@ -545,6 +574,7 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -552,9 +582,13 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
             children: [
               Icon(Icons.settings_suggest, color: Colors.orange.shade700),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "Fiyat Ayarları",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
             ],
           ),
@@ -567,73 +601,97 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
                 TextField(
                   controller: fiyatController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Saatlik Saha Ücreti (₺)",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     prefixIcon: Icon(
                       Icons.sports_soccer,
                       color: Colors.green.shade600,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   "Ekstra Ürünler:",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: suController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Soğuk Su (Koli) ₺",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     prefixIcon: const Icon(
                       Icons.water_drop,
                       color: Colors.lightBlue,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: kramponController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Kiralık Krampon ₺",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     prefixIcon: const Icon(
                       Icons.skateboarding,
                       color: Colors.deepOrange,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: eldivenController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Kaleci Eldiveni ₺",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     prefixIcon: const Icon(
                       Icons.back_hand,
                       color: Colors.pinkAccent,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
               ],
@@ -669,19 +727,24 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
               onPressed: () async {
                 double yeniFiyat =
                     double.tryParse(fiyatController.text) ?? _benimSaham!.fiyat;
+                double yeniSu = double.tryParse(suController.text) ?? 20.0;
+                double yeniKrampon =
+                    double.tryParse(kramponController.text) ?? 70.0;
+                double yeniEldiven =
+                    double.tryParse(eldivenController.text) ?? 40.0;
 
                 bool basarili = await _apiServisi.sahaFiyatGuncelle(
                   int.parse(_benimSaham!.id),
                   yeniFiyat,
+                  yeniSu,
+                  yeniKrampon,
+                  yeniEldiven,
                 );
 
                 setState(() {
-                  _benimSaham!.suFiyati =
-                      double.tryParse(suController.text) ?? 20.0;
-                  _benimSaham!.kramponFiyati =
-                      double.tryParse(kramponController.text) ?? 70.0;
-                  _benimSaham!.eldivenFiyati =
-                      double.tryParse(eldivenController.text) ?? 40.0;
+                  _benimSaham!.suFiyati = yeniSu;
+                  _benimSaham!.kramponFiyati = yeniKrampon;
+                  _benimSaham!.eldivenFiyati = yeniEldiven;
                 });
                 if (!context.mounted) return;
                 Navigator.pop(context);
@@ -711,6 +774,8 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
   }
 
   void _sahaEklemeDialogGoster() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     TextEditingController isimController = TextEditingController();
     TextEditingController fiyatController = TextEditingController(text: "1500");
     TextEditingController ilceController = TextEditingController();
@@ -721,6 +786,7 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -728,9 +794,13 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
             children: [
               Icon(Icons.add_business, color: Colors.orange.shade700),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "Yeni Saha Oluştur",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
             ],
           ),
@@ -741,57 +811,83 @@ class _IsletmeAnaSayfaState extends State<IsletmeAnaSayfa> {
               children: [
                 TextField(
                   controller: isimController,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Saha Adı",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     hintText: "Örn: Merkez Spor Tesisleri",
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white30 : Colors.black38,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: fiyatController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Saatlik Ücret (₺)",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     prefixIcon: const Icon(
                       Icons.monetization_on,
                       color: Colors.green,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: ilceController,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "İlçe",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     hintText: "Örn: Kadıköy",
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white30 : Colors.black38,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: adresController,
                   maxLines: 2,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
                     labelText: "Tam Adres",
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
+                      borderSide: isDark ? BorderSide.none : const BorderSide(),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: isDark ? Colors.white12 : Colors.grey.shade50,
                   ),
                 ),
               ],

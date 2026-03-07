@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'dart:async';
+
 import '../../modeller/saha_modeli.dart';
 import '../../cekirdek/servisler/api_servisi.dart';
 import '../../cekirdek/servisler/kimlik_servisi.dart'; // userId için gerekli
@@ -11,6 +9,7 @@ class OdemeEkrani extends StatefulWidget {
   final DateTime tarih;
   final String saat;
   final double sonTutar;
+  final String ekstraNotlar;
 
   const OdemeEkrani({
     super.key,
@@ -18,6 +17,7 @@ class OdemeEkrani extends StatefulWidget {
     required this.tarih,
     required this.saat,
     required this.sonTutar,
+    this.ekstraNotlar = "",
   });
 
   @override
@@ -28,107 +28,10 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
   final ApiServisi _apiServisi = ApiServisi();
 
   bool _yukleniyor = false;
-  int _secilenYontem = 0;
-  List<dynamic> _kayitliKartlar = [];
-  bool _kartlarYuklendi = false;
-
-  // Form Kontrolcüleri
-  final _kartNoController = TextEditingController();
-  final _kartAdController = TextEditingController();
-  final _sktController = TextEditingController();
-  final _cvvController = TextEditingController();
-
-  // --- KART MASKELERİ ---
-  var kartMaskesi = MaskTextInputFormatter(
-    mask: '#### #### #### ####',
-    filter: {"#": RegExp(r'[0-9]')},
-    type: MaskAutoCompletionType.lazy,
-  );
-
-  // AY KONTROLÜ İÇİN ÖZEL FORMATTER (12'den büyük yazılamaz)
-  final tarihFormatter = TextInputFormatter.withFunction((oldValue, newValue) {
-    if (newValue.text.isNotEmpty) {
-      if (newValue.text.length > 4) return oldValue; // MMYY (4 hane)
-
-      // İlk iki hane (AY) kontrolü
-      if (newValue.text.length >= 2) {
-        int? ay = int.tryParse(newValue.text.substring(0, 2));
-        if (ay == null || ay > 12 || ay == 0) {
-          return oldValue; // Hatalı aysa yazma
-        }
-      }
-    }
-    return newValue;
-  });
-
   @override
   void initState() {
     super.initState();
-    _kartlariGetir();
-  }
-
-  void _kartlariGetir() async {
-    int userId = KimlikServisi.aktifKullanici?['id'] ?? 0;
-    var kartlar = await _apiServisi.kartlariGetir(userId);
-    if (mounted) {
-      setState(() {
-        _kayitliKartlar = kartlar;
-        _kartlarYuklendi = true;
-      });
-    }
-  }
-
-  void _kartSil(int kartId) async {
-    setState(() => _yukleniyor = true);
-    // API'den sil
-    bool sonuc = await _apiServisi.kartSil(kartId);
-    if (sonuc) {
-      // Başarılıysa listeyi yenile
-      _kartlariGetir();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Kart silindi.")));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Silinemedi.")));
-    }
-    setState(() => _yukleniyor = false);
-  }
-
-  void _kartKaydet() async {
-    if (_kartNoController.text.length < 19 || _sktController.text.length < 4) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Kart bilgileri eksik.")));
-      return;
-    }
-
-    setState(() => _yukleniyor = true);
-    int userId = KimlikServisi.aktifKullanici?['id'] ?? 0;
-
-    bool sonuc = await _apiServisi.kartEkle(
-      userId,
-      _kartAdController.text.isEmpty ? "Kartım" : _kartAdController.text,
-      _kartNoController.text,
-    );
-
-    if (sonuc) {
-      _kartNoController.clear();
-      _kartAdController.clear();
-      _sktController.clear();
-      _cvvController.clear();
-      _kartlariGetir(); // Listeyi güncelle
-      Navigator.pop(context); // Dialogu kapat
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Kart eklendi!")));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Kart eklenirken hata oluştu.")),
-      );
-    }
-    setState(() => _yukleniyor = false);
+    // Kart olayları kaldırıldı. Sadece özet gösterilecek.
   }
 
   void _odemeYap() async {
@@ -145,7 +48,7 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
       userId,
       widget.tarih,
       saatInt,
-      "Ödeme Yapıldı - Mobil Uygulama",
+      "Ödeme Test Aşaması. ${widget.ekstraNotlar}",
     );
 
     setState(() => _yukleniyor = false);
@@ -157,7 +60,7 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
         builder: (ctx) => AlertDialog(
           title: const Icon(Icons.check_circle, color: Colors.green, size: 60),
           content: const Text(
-            "Ödeme Başarılı! Rezervasyonunuz oluşturuldu.",
+            "Rezervasyonunuz başarıyla oluşturuldu!\n\n(Ödeme saha tesisinde alınacaktır.)",
             textAlign: TextAlign.center,
           ),
           actions: [
@@ -178,95 +81,6 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
         ),
       );
     }
-  }
-
-  // Yeni Kart Ekleme Penceresi
-  void _kartEkleDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Yeni Kart Ekle",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _kartAdController,
-              decoration: const InputDecoration(
-                labelText: "Kart Başlığı (Örn: İş Kartım)",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _kartNoController,
-              inputFormatters: [kartMaskesi],
-              decoration: const InputDecoration(
-                labelText: "Kart Numarası",
-                prefixIcon: Icon(Icons.credit_card),
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _sktController,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(4),
-                      tarihFormatter,
-                    ],
-                    decoration: const InputDecoration(
-                      labelText: "AA/YY",
-                      hintText: "1225",
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _cvvController,
-                    inputFormatters: [LengthLimitingTextInputFormatter(3)],
-                    decoration: const InputDecoration(
-                      labelText: "CVV",
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _kartKaydet,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF22C55E),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text(
-                "KAYDET",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -320,56 +134,16 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
-              "Kayıtlı Kartlarım",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-
-            // Kart Listesi
-            if (!_kartlarYuklendi)
-              const Center(child: CircularProgressIndicator())
-            else if (_kayitliKartlar.isEmpty)
-              const Text(
-                "Kayıtlı kartınız yok. Aşağıdan ekleyebilirsiniz.",
-                style: TextStyle(color: Colors.grey),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _kayitliKartlar.length,
-                itemBuilder: (context, index) {
-                  var kart = _kayitliKartlar[index];
-                  bool secili = _secilenYontem == index;
-                  return Card(
-                    color: secili ? Colors.green.withOpacity(0.1) : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(
-                        color: secili ? Colors.green : Colors.transparent,
-                      ),
-                    ),
-                    child: ListTile(
-                      leading: const Icon(Icons.credit_card),
-                      title: Text(kart['cardAlias'] ?? "Kart"),
-                      subtitle: Text(
-                        "**** **** **** ${kart['cardNumber'].toString().substring(kart['cardNumber'].toString().length - 4)}",
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _kartSil(kart['id']), // ARTIK ÇÖKMEZ
-                      ),
-                      onTap: () => setState(() => _secilenYontem = index),
-                    ),
-                  );
-                },
+            const SizedBox(height: 30),
+            Center(
+              child: Text(
+                "Şu anlık test aşamasında olduğumuz için ödemeler saha girişinde peşin veya kart ile alınmaktadır.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: koyuMod ? Colors.white70 : Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
-
-            TextButton.icon(
-              onPressed: _kartEkleDialog,
-              icon: const Icon(Icons.add_circle),
-              label: const Text("Yeni Kart Ekle"),
             ),
 
             const SizedBox(height: 30),
@@ -387,7 +161,7 @@ class _OdemeEkraniState extends State<OdemeEkrani> {
                 child: _yukleniyor
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
-                        "ÖDEMEYİ ONAYLA",
+                        "RANDEVUYU ONAYLA",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,

@@ -10,7 +10,7 @@ class SahaModeli {
   final List<String> ozellikler;
   final String isletmeSahibiEmail;
   final String? ownerId;
-  
+
   // Upselling Dinamik Fiyatları
   double suFiyati;
   double kramponFiyati;
@@ -46,9 +46,15 @@ class SahaModeli {
       ozellikler: List<String>.from(map['ozellikler'] ?? []),
       isletmeSahibiEmail: map['isletmeSahibiEmail'] ?? "",
       ownerId: map['ownerId']?.toString(),
-      suFiyati: map['suFiyati'] ?? 20.0,
-      kramponFiyati: map['kramponFiyati'] ?? 70.0,
-      eldivenFiyati: map['eldivenFiyati'] ?? 40.0,
+      suFiyati: map['suFiyati'] != null
+          ? double.tryParse(map['suFiyati'].toString()) ?? 20.0
+          : 20.0,
+      kramponFiyati: map['kramponFiyati'] != null
+          ? double.tryParse(map['kramponFiyati'].toString()) ?? 70.0
+          : 70.0,
+      eldivenFiyati: map['eldivenFiyati'] != null
+          ? double.tryParse(map['eldivenFiyati'].toString()) ?? 40.0
+          : 40.0,
     );
   }
 }

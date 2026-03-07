@@ -584,137 +584,152 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
 
             return Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Text(
-                      "Rezervasyon Özeti",
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        "Rezervasyon Özeti",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _ozetSatiri("Saha", widget.saha.isim, isDark),
+                    _ozetSatiri(
+                      "Tarih",
+                      "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}",
+                      isDark,
+                    ),
+                    _ozetSatiri(
+                      "Saat",
+                      "${_seciliSaat?.toString().padLeft(2, '0')}:00",
+                      isDark,
+                    ),
+
+                    const Divider(height: 30),
+                    // UPSELLING BÖLÜMÜ (Özellik 5)
+                    Text(
+                      "Ekstra İstekler (İsteğe Bağlı)",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  _ozetSatiri("Saha", widget.saha.isim, isDark),
-                  _ozetSatiri(
-                    "Tarih",
-                    "${_seciliTarih.day}/${_seciliTarih.month}/${_seciliTarih.year}",
-                    isDark,
-                  ),
-                  _ozetSatiri(
-                    "Saat",
-                    "${_seciliSaat?.toString().padLeft(2, '0')}:00",
-                    isDark,
-                  ),
+                    const SizedBox(height: 10),
+                    CheckboxListTile(
+                      title: const Text("1 Koli Soğuk Su (10 Adet)"),
+                      subtitle: Text(
+                        "+${suFiyati.toInt()} ₺",
+                        style: const TextStyle(color: Color(0xFF16A34A)),
+                      ),
+                      value: _suEklendi,
+                      activeColor: const Color(0xFF16A34A),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (bool? value) {
+                        setModalState(() {
+                          _suEklendi = value ?? false;
+                        });
+                        setState(() {}); // Ana UI state'ini de tetikle
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text("Kiralık Krampon"),
+                      subtitle: Text(
+                        "+${kramponFiyati.toInt()} ₺",
+                        style: const TextStyle(color: Color(0xFF16A34A)),
+                      ),
+                      value: _kramponEklendi,
+                      activeColor: const Color(0xFF16A34A),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (bool? value) {
+                        setModalState(() {
+                          _kramponEklendi = value ?? false;
+                        });
+                        setState(() {}); // Ana UI state'ini de tetikle
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text("Kiralık Kaleci Eldiveni"),
+                      subtitle: Text(
+                        "+${eldivenFiyati.toInt()} ₺",
+                        style: const TextStyle(color: Color(0xFF16A34A)),
+                      ),
+                      value: _eldivenEklendi,
+                      activeColor: const Color(0xFF16A34A),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (bool? value) {
+                        setModalState(() {
+                          _eldivenEklendi = value ?? false;
+                        });
+                        setState(() {}); // Ana UI state'ini de tetikle
+                      },
+                    ),
 
-                  const Divider(height: 30),
-                  // UPSELLING BÖLÜMÜ (Özellik 5)
-                  Text(
-                    "Ekstra İstekler (İsteğe Bağlı)",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  CheckboxListTile(
-                    title: const Text("1 Koli Soğuk Su (10 Adet)"),
-                    subtitle: Text(
-                      "+${suFiyati.toInt()} ₺",
-                      style: const TextStyle(color: Color(0xFF16A34A)),
-                    ),
-                    value: _suEklendi,
-                    activeColor: const Color(0xFF16A34A),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (bool? value) {
-                      setModalState(() {
-                        _suEklendi = value ?? false;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text("Kiralık Krampon"),
-                    subtitle: Text(
-                      "+${kramponFiyati.toInt()} ₺",
-                      style: const TextStyle(color: Color(0xFF16A34A)),
-                    ),
-                    value: _kramponEklendi,
-                    activeColor: const Color(0xFF16A34A),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (bool? value) {
-                      setModalState(() {
-                        _kramponEklendi = value ?? false;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text("Kiralık Kaleci Eldiveni"),
-                    subtitle: Text(
-                      "+${eldivenFiyati.toInt()} ₺",
-                      style: const TextStyle(color: Color(0xFF16A34A)),
-                    ),
-                    value: _eldivenEklendi,
-                    activeColor: const Color(0xFF16A34A),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (bool? value) {
-                      setModalState(() {
-                        _eldivenEklendi = value ?? false;
-                      });
-                    },
-                  ),
-
-                  const Divider(height: 30),
-                  _ozetSatiri(
-                    "Ana Tutar",
-                    "${widget.saha.fiyat.toInt()} ₺",
-                    isDark,
-                  ),
-                  if (ekstraToplam > 0)
+                    const Divider(height: 30),
                     _ozetSatiri(
-                      "Ekstralar",
-                      "+${ekstraToplam.toInt()} ₺",
+                      "Ana Tutar",
+                      "${widget.saha.fiyat.toInt()} ₺",
                       isDark,
                     ),
-                  _ozetSatiri(
-                    "Genel Toplam",
-                    "${genelToplam.toInt()} ₺",
-                    isDark,
-                    isTotal: true,
-                  ),
+                    if (ekstraToplam > 0)
+                      _ozetSatiri(
+                        "Ekstralar",
+                        "+${ekstraToplam.toInt()} ₺",
+                        isDark,
+                      ),
+                    _ozetSatiri(
+                      "Genel Toplam",
+                      "${genelToplam.toInt()} ₺",
+                      isDark,
+                      isTotal: true,
+                    ),
 
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A),
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context); // Dialogu kapat
+
+                        List<String> secilenEkstralar = [];
+                        if (_suEklendi) secilenEkstralar.add("Su");
+                        if (_kramponEklendi) secilenEkstralar.add("Krampon");
+                        if (_eldivenEklendi) secilenEkstralar.add("Eldiven");
+
+                        String notlar = secilenEkstralar.isEmpty
+                            ? "Ekstra Yok"
+                            : "Ekstralar: ${secilenEkstralar.join(', ')}";
+
+                        importOdemeSayfasi(genelToplam, notlar);
+                      },
+                      child: const Text(
+                        "ÖDEME ADIMINA GEÇ",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.pop(context); // Dialogu kapat
-                      importOdemeSayfasi(genelToplam);
-                    },
-                    child: const Text(
-                      "ÖDEME ADIMINA GEÇ",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -725,11 +740,11 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
 
   // Bu fonksiyon sayfanın en başına import eklemeden ödeme sayfasına geçmek için gecikmeli bir push yapar.
   // Oku ve test et.
-  void importOdemeSayfasi(double sonGenelTutar) {
-    odemeEkraninaGit(sonGenelTutar);
+  void importOdemeSayfasi(double sonGenelTutar, String notlar) {
+    odemeEkraninaGit(sonGenelTutar, notlar);
   }
 
-  void odemeEkraninaGit(double gTutar) {
+  void odemeEkraninaGit(double gTutar, String notlar) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -738,6 +753,7 @@ class _SahaDetayEkraniState extends State<SahaDetayEkrani> {
           tarih: _seciliTarih,
           saat: "${_seciliSaat.toString().padLeft(2, '0')}:00",
           sonTutar: gTutar,
+          ekstraNotlar: notlar,
         ),
       ),
     );
